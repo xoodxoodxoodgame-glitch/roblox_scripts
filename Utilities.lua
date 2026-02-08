@@ -49,12 +49,40 @@ function Utilities:setupProximityPrompts()
 end
 
 function Utilities:setupPingDisplay()
-    -- Create ping display GUI
-    local UI = require(script.Parent.UI) or {}
-    if UI.createPingDisplay then
-        Utilities.State.pingScreenGui, Utilities.State.pingFrame, Utilities.State.pingLabel = 
-            UI.createPingDisplay(Utilities.Services.playerGui)
-    end
+    -- Create ping display GUI directly (since modules are loaded via loadstring)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "PingDisplayGUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = Utilities.Services.playerGui
+
+    local pingFrame = Instance.new("Frame")
+    pingFrame.Name = "PingFrame"
+    pingFrame.Size = UDim2.new(0, 120, 0, 35)
+    pingFrame.Position = UDim2.new(0, 10, 0.5, -17.5)
+    pingFrame.AnchorPoint = Vector2.new(0, 0.5)
+    pingFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    pingFrame.BackgroundTransparency = 0.4
+    pingFrame.BorderSizePixel = 0
+    pingFrame.Parent = screenGui
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = pingFrame
+
+    local pingLabel = Instance.new("TextLabel")
+    pingLabel.Name = "PingLabel"
+    pingLabel.Size = UDim2.new(1, 0, 1, 0)
+    pingLabel.BackgroundTransparency = 1
+    pingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pingLabel.TextSize = 16
+    pingLabel.Font = Enum.Font.SourceSansBold
+    pingLabel.Text = "Ping: --ms"
+    pingLabel.Parent = pingFrame
+
+    Utilities.State.pingScreenGui = screenGui
+    Utilities.State.pingFrame = pingFrame
+    Utilities.State.pingLabel = pingLabel
     
     -- Start ping display update loop
     Utilities:startPingUpdateLoop()
