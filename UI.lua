@@ -32,6 +32,9 @@ function UI.init(State, Config, Fluent, SaveManager, InterfaceManager)
     -- Setup ping display
     UI:setupPingDisplay()
     
+    -- Setup collapse timer update to use existing cachedTimerLabel
+    UI:setupCollapseTimerUpdate()
+    
     return UI
 end
 
@@ -351,6 +354,90 @@ function UI:startPingUpdateLoop()
             task.wait(1)
         end
     end)
+end
+
+function UI:setupCollapseTimerUpdate()
+    -- Set up connection to monitor Percent text changes
+    local function setupConnection()
+        local collapseStuff = workspace:FindFirstChild("CollapseStuff")
+        if not collapseStuff then return end
+        
+        local collapseSignGui = collapseStuff:FindFirstChild("CollapseSignGui")
+        if not collapseSignGui then return end
+        
+        local billboardGui = collapseSignGui:FindFirstChild("BillboardGui")
+        if not billboardGui then return end
+        
+        local percent = billboardGui:FindFirstChild("Percent")
+        if not percent then return end
+        
+        -- Connect to the Text property change signal
+        local connection = percent:GetPropertyChangedSignal("Text"):Connect(function()
+            UI:updateCollapseTimerDisplay(percent)
+        end)
+        
+        -- Store connection for cleanup
+        table.insert(UI.State.connections, connection)
+        
+        -- Initial update
+        UI:updateCollapseTimerDisplay(percent)
+    end
+    
+    -- Try to setup connection immediately
+    setupConnection()
+    
+    -- Also setup a watcher for when the objects get created
+    local function waitForObjects()
+        local collapseStuff = workspace:WaitForChild("CollapseStuff", 5)
+        if collapseStuff then
+            local collapseSignGui = collapseStuff:WaitForChild("CollapseSignGui", 5)
+            if collapseSignGui then
+                local billboardGui = collapseSignGui:WaitForChild("BillboardGui", 5)
+                if billboardGui then
+                    local percent = billboardGui:WaitForChild("Percent", 5)
+                    if percent then
+                        setupConnection()
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Start watching for objects in case they're not created yet
+    task.spawn(waitForObjects)
+end
+
+function UI:updateCollapseTimerDisplay(percentLabel)
+    if not UI.State.cachedTimerLabel or not percentLabel then return end
+    
+    local percentValue = percentLabel.Text
+    
+    -- Extract numeric value from text (assuming format like "75%" or "75")
+    local numericValue = percentValue:gsub("%%", "")
+    local number = tonumber(numericValue)
+    
+    if number then
+        -- Format as percentage display
+        local timeDisplay = string.format("%s%%", numericValue)
+        
+        -- Color code based on percentage
+        local timerColor = Color3.fromRGB(255, 255, 255)
+        if number <= 25 then
+            timerColor = Color3.fromRGB(255, 0, 0) -- Red for low time
+        elseif number <= 50 then
+            timerColor = Color3.fromRGB(255, 165, 0) -- Orange for medium time
+        elseif number <= 75 then
+            timerColor = Color3.fromRGB(255, 255, 0) -- Yellow for getting low
+        else
+            timerColor = Color3.fromRGB(0, 255, 0) -- Green for plenty of time
+        end
+        
+        UI.State.cachedTimerLabel.TextColor3 = timerColor
+        UI.State.cachedTimerLabel.Text = timeDisplay
+    else
+        UI.State.cachedTimerLabel.Text = percentValue
+        UI.State.cachedTimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
 end
 
 return UI
