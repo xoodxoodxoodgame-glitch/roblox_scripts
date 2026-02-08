@@ -17,6 +17,12 @@ function Mining.init(State, Config, Services)
     -- Setup ore caching
     Mining:setupOreCaching()
     
+    -- Setup cargo UI
+    Mining:setupCargoUI()
+    
+    -- Setup timer UI
+    Mining:setupTimerUI()
+    
     -- Start main mining loop
     Mining:startMiningLoop()
     
@@ -121,6 +127,51 @@ function Mining:setupOreCaching()
             self.State.cachedOres[ore] = nil
         end
     end)
+end
+
+function Mining:setupCargoUI()
+    -- Create cargo UI using UI module's function
+    if self.UI and self.UI.createOrePackCargoGUI then
+        self.State.cargoScreenGui, self.State.cargoFrame, self.State.cargoLabel = 
+            self.UI.createOrePackCargoGUI(self.Services.playerGui)
+    else
+        warn("Mining: UI module not available, cargo display disabled")
+    end
+end
+
+function Mining:setupTimerUI()
+    -- Create timer display (simple text label at top)
+    local timerScreenGui = Instance.new("ScreenGui")
+    timerScreenGui.Name = "MiningTimerGUI"
+    timerScreenGui.ResetOnSpawn = false
+    timerScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    timerScreenGui.Parent = self.Services.playerGui
+
+    local timerFrame = Instance.new("Frame")
+    timerFrame.Name = "TimerFrame"
+    timerFrame.Size = UDim2.new(0, 200, 0, 30)
+    timerFrame.Position = UDim2.new(0.5, -100, 0, 10) -- Top-center
+    timerFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    timerFrame.BackgroundTransparency = 0.3
+    timerFrame.BorderSizePixel = 0
+    timerFrame.Parent = timerScreenGui
+
+    -- Add rounded corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = timerFrame
+
+    local timerLabel = Instance.new("TextLabel")
+    timerLabel.Name = "TimerLabel"
+    timerLabel.Size = UDim2.new(1, 0, 1, 0)
+    timerLabel.BackgroundTransparency = 1
+    timerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    timerLabel.TextSize = 18
+    timerLabel.Font = Enum.Font.SourceSansBold
+    timerLabel.Text = "00:00"
+    timerLabel.Parent = timerFrame
+
+    self.State.cachedTimerLabel = timerLabel
 end
 
 function Mining:cacheOreId(ore)
