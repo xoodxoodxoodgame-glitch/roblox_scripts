@@ -671,20 +671,29 @@ function Mining:startMiningLoop()
                                 -- Get terrain state before mining
                                 local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                 local preMineCellData = mineTerrainInstance:Get(gridPos)
-                                
+                                print("Pre mine cell data:", preMineCellData)
+                                if preMineCellData then
+                                    print("Pre mine - Block:", preMineCellData.Block, "Ore:", preMineCellData.Ore)
+                                end
+
                                 local success, result = self:mineTarget(gridPos, bestOre)
 
                                 if success then
                                     -- Verify the ore was actually mined by checking if ore was removed from terrain
                                     task.wait(result)
-                                    
+
                                     local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                     local postMineCellData = mineTerrainInstance:Get(gridPos)
                                     print("Post mine cell data:", postMineCellData)
+                                    if postMineCellData then
+                                        print("Post mine - Block:", postMineCellData.Block, "Ore:", postMineCellData.Ore)
+                                    end
                                     -- Mining succeeded if the ore was removed (Ore field became nil)
                                     local oreWasRemoved = preMineCellData and preMineCellData.Ore and 
                                         (not postMineCellData or not postMineCellData.Ore)
-                                    
+
+                                    print("Ore was removed:", oreWasRemoved)
+
                                     if oreWasRemoved then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
