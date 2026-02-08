@@ -6,6 +6,9 @@ function ESP.init(State, Config, Services)
     ESP.Config = Config
     ESP.Services = Services or {}
     
+    -- Load material and gem data (copied from Mining module)
+    ESP:loadMaterialData()
+    
     -- ESP Object Pools for performance optimization
     ESP.ESPPools = {
         highlights = {},
@@ -16,6 +19,68 @@ function ESP.init(State, Config, Services)
     ESP:setupESP()
     
     return ESP
+end
+
+function ESP:loadMaterialData()
+    -- Current color mappings to preserve
+    local CURRENT_COLORS = {
+        -- Materials
+        ["Tin"] = Color3.fromRGB(169, 169, 169),
+        ["Iron"] = Color3.fromRGB(160, 82, 45),
+        ["Lead"] = Color3.fromRGB(96, 96, 96),
+        ["Cobalt"] = Color3.fromRGB(0, 71, 171),
+        ["Aluminium"] = Color3.fromRGB(220, 220, 240),
+        ["Silver"] = Color3.fromRGB(192, 192, 220),
+        ["Uranium"] = Color3.fromRGB(0, 255, 0),
+        ["Vanadium"] = Color3.fromRGB(173, 255, 47),
+        ["Gold"] = Color3.fromRGB(255, 215, 0),
+        ["Titanium"] = Color3.fromRGB(128, 0, 128),
+        ["Tungsten"] = Color3.fromRGB(64, 64, 72),
+        ["Molybdenum"] = Color3.fromRGB(160, 160, 170),
+        ["Plutonium"] = Color3.fromRGB(0, 255, 255),
+        ["Palladium"] = Color3.fromRGB(255, 255, 0),
+        ["Iridium"] = Color3.fromRGB(255, 255, 255),
+        ["Mithril"] = Color3.fromRGB(144, 238, 144),
+        ["Thorium"] = Color3.fromRGB(0, 160, 80),
+        ["Adamantium"] = Color3.fromRGB(0, 120, 40),
+        ["Rhodium"] = Color3.fromRGB(139, 69, 19),
+        ["Unobtainium"] = Color3.fromRGB(255, 0, 128),
+        -- Gems
+        ["Topaz"] = Color3.fromRGB(255, 191, 0),
+        ["Emerald"] = Color3.fromRGB(0, 128, 0),
+        ["Sapphire"] = Color3.fromRGB(0, 0, 255),
+        ["Ruby"] = Color3.fromRGB(220, 20, 60),
+        ["Diamond"] = Color3.fromRGB(0, 255, 255),
+        ["Poudretteite"] = Color3.fromRGB(255, 0, 128),
+        ["Zultanite"] = Color3.fromRGB(128, 0, 128),
+        ["Grandidierite"] = Color3.fromRGB(0, 128, 128),
+        ["Musgravite"] = Color3.fromRGB(128, 0, 64),
+        ["Painite"] = Color3.fromRGB(255, 0, 0),
+    }
+
+    local materials = {}
+    local gems = {}
+
+    for oreId, oreData in pairs(ESP.Services.BlockDefinitions) do
+        if oreData.Types and oreData.Types.Ore then
+            materials[oreId] = {
+                name = oreData.Name or oreId,
+                color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
+                hardness = oreData.Hardness or 0,
+                value = oreData.Value or 0
+            }
+        elseif oreData.Types and oreData.Types.Gem then
+            gems[oreId] = {
+                name = oreData.Name or oreId,
+                color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
+                hardness = oreData.Hardness or 0,
+                value = oreData.Value or 0
+            }
+        end
+    end
+
+    ESP.MATERIAL_DATA = materials
+    ESP.GEM_DATA = gems
 end
 
 function ESP:setupESP()
