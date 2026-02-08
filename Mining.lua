@@ -131,9 +131,16 @@ end
 
 function Mining:setupCargoUI()
     -- Create cargo UI using UI module's function
-    if self.UI and self.UI.createOrePackCargoGUI then
-        self.State.cargoScreenGui, self.State.cargoFrame, self.State.cargoLabel = 
-            self.UI.createOrePackCargoGUI(self.Services.playerGui)
+    if self.UI then
+        print("Mining: UI module found, creating cargo GUI")
+        if self.UI.createOrePackCargoGUI then
+            print("Mining: createOrePackCargoGUI function found")
+            self.State.cargoScreenGui, self.State.cargoFrame, self.State.cargoLabel = 
+                self.UI.createOrePackCargoGUI(self.Services.playerGui)
+            print("Mining: Cargo GUI created successfully")
+        else
+            warn("Mining: createOrePackCargoGUI function not found in UI module")
+        end
     else
         warn("Mining: UI module not available, cargo display disabled")
     end
@@ -646,7 +653,7 @@ function Mining:startTimerLoop()
                         self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                     end
                 else
-                    print("error")
+                    print("Mining: cargoLabel is nil - cargo UI was not created properly")
                 end
             end
         end
