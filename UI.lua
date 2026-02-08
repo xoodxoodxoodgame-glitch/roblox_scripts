@@ -1,0 +1,317 @@
+-- UI Module - Handles Fluent UI creation and management
+local UI = {}
+
+function UI.init(State, Config, Fluent, SaveManager, InterfaceManager)
+    UI.State = State
+    UI.Config = Config
+    UI.Fluent = Fluent
+    UI.SaveManager = SaveManager
+    UI.InterfaceManager = InterfaceManager
+    
+    -- Create main window
+    UI.Window = Fluent:CreateWindow({
+        Title = "Fluent " .. Fluent.Version,
+        SubTitle = "by dawid",
+        TabWidth = 120,
+        Size = UDim2.fromOffset(600, 600),
+        Acrylic = true,
+        Theme = "Dark",
+        MinimizeKey = Enum.KeyCode.LeftControl
+    })
+    
+    -- Create tabs
+    UI.Tabs = {
+        Main = UI.Window:AddTab({ Title = "Main", Icon = "" }),
+        PlayerESP = UI.Window:AddTab({ Title = "Player ESP", Icon = "eye" }),
+        Settings = UI.Window:AddTab({ Title = "Settings", Icon = "settings" })
+    }
+    
+    UI:createMainTab()
+    UI:createPlayerESPTab()
+    
+    return UI
+end
+
+function UI:createMainTab()
+    local Tabs = UI.Tabs
+    
+    -- Auto Mining Toggle
+    local Toggle = Tabs.Main:AddToggle("AutoMining", {Title = "Auto Mining", Default = false })
+    
+    Tabs.Settings:AddKeybind("AutoMiningKeybind", {
+        Title = "Auto Mining Keybind",
+        Mode = "Toggle",
+        Default = "Q",
+        Callback = function(Value)
+            UI.Config.AutoMining = Value
+            Toggle:SetValue(Value)
+        end
+    })
+    
+    Toggle:OnChanged(function(Value)
+        UI.Config.AutoMining = Value
+        
+        UI.Fluent:Notify({
+            Title = Value and "✅ Auto Mining Enabled" or "❌ Auto Mining Disabled",
+            Content = Value and "Mining script is now active!" or "Mining script has been stopped.",
+            Duration = 2
+        })
+    end)
+    
+    -- Boost Speed Slider
+    local BoostSlider = Tabs.Main:AddSlider("BoostSpeed", {
+        Title = "Boost Speed",
+        Description = "Extra movement speed when boost is active (press U to toggle)",
+        Default = 100,
+        Min = 20,
+        Max = 500,
+        Rounding = 0,
+        Callback = function(Value)
+            UI.Config.BoostSpeed = tonumber(Value)
+        end
+    })
+    
+    BoostSlider:OnChanged(function(Value)
+        UI.Config.BoostSpeed = tonumber(Value)
+        if UI.Movement and UI.Movement.updateGravity then
+            UI.Movement.updateGravity()
+        end
+    end)
+    
+    -- ESP Range Slider
+    local ESPRangeSlider = Tabs.Main:AddSlider("ESPRange", {
+        Title = "ESP Range",
+        Description = "Maximum distance to show ESP markers (in studs)",
+        Default = 300,
+        Min = 100,
+        Max = 500,
+        Rounding = 0,
+        Callback = function(Value)
+            UI.Config.ESPRange = tonumber(Value)
+        end
+    })
+    
+    ESPRangeSlider:OnChanged(function(Value)
+        UI.Config.ESPRange = tonumber(Value)
+    end)
+    
+    -- Ore Selection Dropdown
+    local OreDropdown = Tabs.Main:AddDropdown("SelectedOres", {
+        Title = "Select Ores to Mine",
+        Description = "Choose which ores to automatically mine",
+        Values = UI:getOreTypes().materials,
+        Multi = true,
+        Default = {},
+    })
+    
+    OreDropdown:OnChanged(function(Value)
+        UI.Config.SelectedOres = {}
+        for OreName, State in next, Value do
+            if State then
+                UI.Config.SelectedOres[OreName] = true
+            end
+        end
+    end)
+    
+    -- Gem Selection Dropdown
+    local GemDropdown = Tabs.Main:AddDropdown("SelectedGems", {
+        Title = "Select Gems to Mine",
+        Description = "Choose which gems to automatically mine",
+        Values = UI:getOreTypes().gems,
+        Multi = true,
+        Default = {},
+    })
+    
+    GemDropdown:OnChanged(function(Value)
+        UI.Config.SelectedGems = {}
+        for GemName, State in next, Value do
+            if State then
+                UI.Config.SelectedGems[GemName] = true
+            end
+        end
+    end)
+end
+
+function UI:createPlayerESPTab()
+    local Tabs = UI.Tabs
+    
+    -- Player ESP Toggle
+    local PlayerESPToggle = Tabs.PlayerESP:AddToggle("PlayerESPEnabled", {
+        Title = "Enable Player ESP",
+        Description = "Highlights + labels for players",
+        Default = false,
+    })
+    
+    PlayerESPToggle:OnChanged(function(Value)
+        UI.State.PlayerESPEnabled = Value and true or false
+        if UI.ESP then
+            if UI.State.PlayerESPEnabled then
+                UI.ESP.enablePlayerESP()
+            else
+                UI.ESP.disablePlayerESP()
+            end
+        end
+    end)
+    
+    -- Show Name Toggle
+    local PlayerESPShowNameToggle = Tabs.PlayerESP:AddToggle("PlayerESPShowName", {
+        Title = "Show Name",
+        Description = "Show first 6 chars of name",
+        Default = true,
+    })
+    
+    PlayerESPShowNameToggle:OnChanged(function(Value)
+        UI.State.PlayerESPShowName = Value and true or false
+    end)
+    
+    -- Show Distance Toggle
+    local PlayerESPShowDistanceToggle = Tabs.PlayerESP:AddToggle("PlayerESPShowDistance", {
+        Title = "Show Distance",
+        Description = "Show distance on label",
+        Default = false,
+    })
+    
+    PlayerESPShowDistanceToggle:OnChanged(function(Value)
+        UI.State.PlayerESPShowDistance = Value and true or false
+    end)
+    
+    -- ESP Range Slider
+    local PlayerESPRangeSlider = Tabs.PlayerESP:AddSlider("PlayerESPRange", {
+        Title = "ESP Range",
+        Description = "Only show players within this distance (0 = unlimited)",
+        Default = 0,
+        Min = 0,
+        Max = 20000,
+        Rounding = 0,
+    })
+    
+    PlayerESPRangeSlider:OnChanged(function(Value)
+        UI.State.PlayerESPMaxDistance = Value or 0
+    end)
+    
+    -- Tracer Lines Toggle
+    local PlayerESPTracersToggle = Tabs.PlayerESP:AddToggle("PlayerESPTracers", {
+        Title = "Tracer Lines",
+        Description = "Line from top-center of screen to player (requires Drawing API)",
+        Default = false,
+    })
+    
+    PlayerESPTracersToggle:OnChanged(function(Value)
+        UI.State.PlayerESPTracersEnabled = Value and true or false
+        if not UI.State.PlayerESPTracersEnabled and UI.ESP then
+            UI.ESP.clearTracers()
+        end
+    end)
+    
+    -- Tracers Offscreen Toggle
+    local PlayerESPTracersOffscreenToggle = Tabs.PlayerESP:AddToggle("PlayerESPTracersOffscreen", {
+        Title = "Tracers Offscreen",
+        Description = "Keep tracers visible offscreen (clamped to screen edge)",
+        Default = true,
+    })
+    
+    PlayerESPTracersOffscreenToggle:OnChanged(function(Value)
+        UI.State.PlayerESPTracersShowOffscreen = Value and true or false
+    end)
+end
+
+function UI:getOreTypes()
+    -- Materials ordered by hardness (lowest to highest)
+    local materials = {
+        "Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium",
+        "Tungsten","Gold", "Titanium", "Molybdenum", "Plutonium", "Palladium",
+        "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"
+    }
+
+    -- Gems in definition order
+    local gems = {
+        "Topaz", "Emerald", "Ruby", "Sapphire", "Diamond", "Poudretteite",
+        "Zultanite", "Grandidierite", "Musgravite", "Painite"
+    }
+
+    return {
+        materials = materials,
+        gems = gems,
+        all = function()
+            local all = {}
+            for _, ore in ipairs(materials) do
+                table.insert(all, ore)
+            end
+            for _, gem in ipairs(gems) do
+                table.insert(all, gem)
+            end
+            return all
+        end
+    }
+end
+
+function UI.createOrePackCargoGUI(playerGui)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "OrePackCargoGUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = playerGui
+
+    local cargoFrame = Instance.new("Frame")
+    cargoFrame.Name = "CargoFrame"
+    cargoFrame.Size = UDim2.new(0, 160, 0, 40)
+    cargoFrame.Position = UDim2.new(0, 10, 1, -40) -- Bottom-left
+    cargoFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    cargoFrame.BackgroundTransparency = 0.3
+    cargoFrame.BorderSizePixel = 0
+    cargoFrame.Parent = screenGui
+
+    -- Add rounded corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = cargoFrame
+
+    local cargoLabel = Instance.new("TextLabel")
+    cargoLabel.Name = "CargoLabel"
+    cargoLabel.Size = UDim2.new(1, 0, 1, 0)
+    cargoLabel.BackgroundTransparency = 1
+    cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    cargoLabel.TextSize = 24
+    cargoLabel.Font = Enum.Font.SourceSansBold
+    cargoLabel.Text = "Loading..."
+    cargoLabel.Parent = cargoFrame
+
+    return screenGui, cargoFrame, cargoLabel
+end
+
+function UI.createPingDisplay(playerGui)
+    local pingScreenGui = Instance.new("ScreenGui")
+    pingScreenGui.Name = "PingDisplayGUI"
+    pingScreenGui.ResetOnSpawn = false
+    pingScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    pingScreenGui.Parent = playerGui
+
+    local pingFrame = Instance.new("Frame")
+    pingFrame.Name = "PingFrame"
+    pingFrame.Size = UDim2.new(0, 120, 0, 35)
+    pingFrame.Position = UDim2.new(0, 10, 0.5, -17.5) -- Center-left
+    pingFrame.AnchorPoint = Vector2.new(0, 0.5) -- Anchor to center-left
+    pingFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    pingFrame.BackgroundTransparency = 0.4
+    pingFrame.BorderSizePixel = 0
+    pingFrame.Parent = pingScreenGui
+
+    -- Add rounded corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = pingFrame
+
+    local pingLabel = Instance.new("TextLabel")
+    pingLabel.Name = "PingLabel"
+    pingLabel.Size = UDim2.new(1, 0, 1, 0)
+    pingLabel.BackgroundTransparency = 1
+    pingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pingLabel.TextSize = 16
+    pingLabel.Font = Enum.Font.SourceSansBold
+    pingLabel.Text = "Ping: --ms"
+    pingLabel.Parent = pingFrame
+
+    return pingScreenGui, pingFrame, pingLabel
+end
+
+return UI
