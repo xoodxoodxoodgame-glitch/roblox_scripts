@@ -317,7 +317,7 @@ function Mining:getPickaxeClientFromToolModel(toolModel)
     return toolObj:FindComponentByName("PickaxeClient")
 end
 
-function Mining:mineTarget(gridPos, oreToRemove)
+function Mining:mineTarget(gridPos)
     local tool = self:GetTool()
     if not tool then
         return false, "No tool equipped"
@@ -673,7 +673,7 @@ function Mining:startMiningLoop()
                                 local preMineCellData = mineTerrainInstance:Get(gridPos)
                                 print("Pre mine cell data:", game:GetService("HttpService"):JSONEncode(preMineCellData or {}))
                                 
-                                local success, result = self:mineTarget(gridPos, bestOre)
+                                local success, result = self:mineTarget(gridPos)
 
                                 if success then
                                     -- Verify the ore was actually mined by checking if ore was removed from terrain
