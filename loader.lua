@@ -114,7 +114,7 @@ end
 -- Module loader function using loadstring
 local function loadModule(moduleName)
     local success, module = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/xoodxoodxoodgame-glitch/roblox_scripts/main/" .. moduleName .. ".lua"))()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/xoodxoodxoodgame-glitch/roblox_scripts/main/" .. moduleName .. ".lua?v=" .. tick()))()
     end)
     
     if success then
