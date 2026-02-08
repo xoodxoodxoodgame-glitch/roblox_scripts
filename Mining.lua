@@ -671,25 +671,32 @@ function Mining:startMiningLoop()
                                 -- Get terrain state before mining
                                 local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                 local preMineCellData = mineTerrainInstance:Get(gridPos)
-                                print("Pre mine cell data:", game:GetService("HttpService"):JSONEncode(preMineCellData or {}))
                                 
                                 local success, result = self:mineTarget(gridPos)
 
                                 if success then
-                                    -- Verify the ore was actually mined by checking if ore was removed from terrain
+                                    -- Verify the ore was actually mined by checking terrain changes
                                     task.wait(result)
 
                                     local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                     local postMineCellData = mineTerrainInstance:Get(gridPos)
-                                    print("Post mine cell data:", game:GetService("HttpService"):JSONEncode(postMineCellData or {}))
                                     
-                                    -- Mining succeeded if the ore was removed (Ore field became nil)
-                                    local oreWasRemoved = preMineCellData and preMineCellData.Ore and 
-                                        (not postMineCellData or not postMineCellData.Ore)
+                                    -- Mining succeeded if terrain changed (ore removed, block became air, etc.)
+                                    local terrainChanged = false
+                                    
+                                    if not preMineCellData and postMineCellData then
+                                        terrainChanged = true -- Block appeared
+                                    elseif preMineCellData and not postMineCellData then
+                                        terrainChanged = true -- Block disappeared
+                                    elseif preMineCellData and postMineCellData then
+                                        -- Check if ore was removed or block changed
+                                        if preMineCellData.Ore ~= (postMineCellData.Ore or nil) or 
+                                           preMineCellData.Block ~= postMineCellData.Block then
+                                            terrainChanged = true
+                                        end
+                                    end
 
-                                    print("Ore was removed:", oreWasRemoved)
-
-                                    if oreWasRemoved then
+                                    if terrainChanged then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
                                             self.State.cachedOres[bestOre] = nil
@@ -710,9 +717,9 @@ function Mining:startMiningLoop()
                                             end
                                         end
                                     else
-                                        -- Mining appeared to succeed but ore wasn't removed from terrain, treat as failure
+                                        -- Mining appeared to succeed but terrain didn't change, treat as failure
                                         self.State.consecutiveFails = self.State.consecutiveFails + 1
-                                        warn("Mining invoke succeeded but ore not removed from terrain, treating as failure")
+                                        warn("Mining invoke succeeded but terrain unchanged, treating as failure")
                                     end
                                 else
                                     self.State.consecutiveFails = self.State.consecutiveFails + 1
