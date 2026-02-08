@@ -690,8 +690,10 @@ function Mining:startMiningLoop()
                                         terrainChanged = true -- Block disappeared
                                     elseif preMineCellData and postMineCellData then
                                         -- Check if ore was removed or block changed
-                                        if preMineCellData.Ore ~= (postMineCellData.Ore or nil) or 
-                                           preMineCellData.Block ~= postMineCellData.Block then
+                                        local oreChanged = (preMineCellData.Ore or "") ~= (postMineCellData.Ore or "")
+                                        local blockChanged = preMineCellData.Block ~= postMineCellData.Block
+                                        
+                                        if oreChanged or blockChanged then
                                             terrainChanged = true
                                         end
                                     end
