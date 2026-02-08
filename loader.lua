@@ -133,86 +133,67 @@ local ESP = loadModule("ESP")
 local Movement = loadModule("Movement")
 local Vehicle = loadModule("Vehicle")
 
--- Initialize modules with shared state
+-- Shared services object passed to all modules
+local Services = {
+    Rep = Rep,
+    Players = Players,
+    UserInputService = UserInputService,
+    RunService = RunService,
+    Workspace = Workspace,
+    player = player,
+    playerGui = playerGui,
+    PlacedOre = PlacedOre,
+    VehiclesFolder = VehiclesFolder,
+    ToolBase = ToolBase,
+    PlayerStats = PlayerStats,
+    MiningTimeFunction = MiningTimeFunction,
+    MineTerrain = MineTerrain,
+    BlockDefinitions = BlockDefinitions
+}
+
+-- Initialize modules with shared state and services
 if Utilities then
-    Utilities.init(State, Config, {
-        Rep = Rep,
-        Players = Players,
-        UserInputService = UserInputService,
-        RunService = RunService,
-        Workspace = Workspace,
-        player = player,
-        playerGui = playerGui,
-        PlacedOre = PlacedOre,
-        VehiclesFolder = VehiclesFolder,
-        ToolBase = ToolBase,
-        PlayerStats = PlayerStats,
-        MiningTimeFunction = MiningTimeFunction,
-        MineTerrain = MineTerrain,
-        BlockDefinitions = BlockDefinitions
-    })
+    Utilities.init(State, Config, Services)
 end
 
 if UI then
-    UI.init(State, Config, Fluent, SaveManager, InterfaceManager)
+    UI.init(State, Config, Fluent, SaveManager, InterfaceManager, Services)
 end
 
 if Mining then
-    Mining.init(State, Config, {
-        Rep = Rep,
-        Players = Players,
-        UserInputService = UserInputService,
-        RunService = RunService,
-        Workspace = Workspace,
-        player = player,
-        playerGui = playerGui,
-        PlacedOre = PlacedOre,
-        VehiclesFolder = VehiclesFolder,
-        ToolBase = ToolBase,
-        PlayerStats = PlayerStats,
-        MiningTimeFunction = MiningTimeFunction,
-        MineTerrain = MineTerrain,
-        BlockDefinitions = BlockDefinitions
-    })
+    Mining.init(State, Config, Services)
 end
 
 if ESP then
-    ESP.init(State, Config, {
-        Rep = Rep,
-        Players = Players,
-        UserInputService = UserInputService,
-        RunService = RunService,
-        Workspace = Workspace,
-        player = player,
-        playerGui = playerGui,
-        PlacedOre = PlacedOre,
-        VehiclesFolder = VehiclesFolder
-    })
+    ESP.init(State, Config, Services)
 end
 
 if Movement then
-    Movement.init(State, Config, {
-        Rep = Rep,
-        Players = Players,
-        UserInputService = UserInputService,
-        RunService = RunService,
-        Workspace = Workspace,
-        player = player,
-        playerGui = playerGui
-    })
+    Movement.init(State, Config, Services)
 end
 
 if Vehicle then
-    Vehicle.init(State, Config, {
-        Rep = Rep,
-        Players = Players,
-        UserInputService = UserInputService,
-        RunService = RunService,
-        Workspace = Workspace,
-        player = player,
-        playerGui = playerGui,
-        VehiclesFolder = VehiclesFolder
-    })
+    Vehicle.init(State, Config, Services)
+end
+
+-- Set cross-module references
+if ESP then
+    ESP.UI = UI
+    ESP.Mining = Mining
+end
+
+if UI then
+    UI.ESP = ESP
+    UI.Mining = Mining
+    UI.Movement = Movement
+end
+
+if Mining then
+    Mining.UI = UI
+end
+
+if Movement then
+    Movement.UI = UI
 end
 
 -- Setup SaveManager and InterfaceManager

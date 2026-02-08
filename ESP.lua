@@ -5,19 +5,19 @@ function ESP.init(State, Config, Services)
     ESP.State = State
     ESP.Config = Config
     ESP.Services = Services or {}
-    
+
     -- Load material and gem data (copied from Mining module)
     ESP:loadMaterialData()
-    
+
     -- ESP Object Pools for performance optimization
     ESP.ESPPools = {
         highlights = {},
         billboards = {}
     }
-    
+
     -- Setup ESP connections
     ESP:setupESP()
-    
+
     return ESP
 end
 
@@ -61,20 +61,54 @@ function ESP:loadMaterialData()
     local materials = {}
     local gems = {}
 
-    for oreId, oreData in pairs(ESP.Services.BlockDefinitions) do
-        if oreData.Types and oreData.Types.Ore then
+    -- Fix: Check if BlockDefinitions exists before using it
+    if ESP.Services.BlockDefinitions then
+        for oreId, oreData in pairs(ESP.Services.BlockDefinitions) do
+            if oreData.Types and oreData.Types.Ore then
+                materials[oreId] = {
+                    name = oreData.Name or oreId,
+                    color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
+                    hardness = oreData.Hardness or 0,
+                    value = oreData.Value or 0
+                }
+            elseif oreData.Types and oreData.Types.Gem then
+                gems[oreId] = {
+                    name = oreData.Name or oreId,
+                    color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
+                    hardness = oreData.Hardness or 0,
+                    value = oreData.Value or 0
+                }
+            end
+        end
+    else
+        warn("ESP: BlockDefinitions not available, using fallback data")
+        -- Create fallback data using known ore types
+        local knownOres = {
+            "Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium",
+            "Gold", "Titanium", "Tungsten", "Molybdenum", "Plutonium", "Palladium",
+            "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"
+        }
+        
+        local knownGems = {
+            "Topaz", "Emerald", "Ruby", "Sapphire", "Diamond", "Poudretteite",
+            "Zultanite", "Grandidierite", "Musgravite", "Painite"
+        }
+        
+        for _, oreId in ipairs(knownOres) do
             materials[oreId] = {
-                name = oreData.Name or oreId,
-                color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
-                hardness = oreData.Hardness or 0,
-                value = oreData.Value or 0
+                name = oreId,
+                color = CURRENT_COLORS[oreId] or Color3.fromRGB(255, 255, 255),
+                hardness = 1,
+                value = 1
             }
-        elseif oreData.Types and oreData.Types.Gem then
-            gems[oreId] = {
-                name = oreData.Name or oreId,
-                color = CURRENT_COLORS[oreId] or (oreData.Appearance and oreData.Appearance.Color) or Color3.fromRGB(255, 255, 255),
-                hardness = oreData.Hardness or 0,
-                value = oreData.Value or 0
+        end
+        
+        for _, gemId in ipairs(knownGems) do
+            gems[gemId] = {
+                name = gemId,
+                color = CURRENT_COLORS[gemId] or Color3.fromRGB(255, 255, 255),
+                hardness = 1,
+                value = 1
             }
         end
     end
@@ -86,7 +120,7 @@ end
 function ESP:setupESP()
     -- Setup Player ESP connections
     ESP:setupPlayerESP()
-    
+
     -- Start ESP update loop
     ESP:startESPUpdateLoop()
 end
@@ -259,7 +293,12 @@ function ESP:createESPHighlight(ore)
 
     local oreId = ESP:getCachedOreId(ore)
     -- This should use Mining module's data when available
-    local oreData = {} -- Placeholder
+    local oreData = {}
+    if ESP.Mining and ESP.Mining.MATERIAL_DATA then
+        oreData = ESP.Mining.MATERIAL_DATA[oreId] or {}
+    elseif ESP.MATERIAL_DATA then
+        oreData = ESP.MATERIAL_DATA[oreId] or {}
+    end
     local oreColor = oreData and oreData.color or Color3.fromRGB(255, 255, 255)
 
     local isMineable = ESP:isOreMineable(oreId)
@@ -291,7 +330,12 @@ function ESP:createESPBillboard(groupKey, groupData)
         if textLabel then
             local distance = ESP.State.root and (groupData.center - ESP.State.root.Position).Magnitude or 0
             -- This should use Mining module's data when available
-            local oreName = "Unknown" -- Placeholder
+            local oreName = "Unknown"
+            if ESP.Mining and ESP.Mining.MATERIAL_DATA and ESP.Mining.MATERIAL_DATA[groupData.oreId] then
+                oreName = ESP.Mining.MATERIAL_DATA[groupData.oreId].name
+            elseif ESP.MATERIAL_DATA and ESP.MATERIAL_DATA[groupData.oreId] then
+                oreName = ESP.MATERIAL_DATA[groupData.oreId].name
+            end
 
             local isMineable = ESP:isOreMineable(groupData.oreId)
             local targetColor = isMineable and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 0, 0)

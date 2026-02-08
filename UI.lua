@@ -329,21 +329,24 @@ end
 function UI:startPingUpdateLoop()
     task.spawn(function()
         while UI.State.pingScreenGui and UI.State.pingScreenGui.Parent do
-            local ping = math.floor(game.Players.LocalPlayer:GetNetworkPing() * 1000)
-            local pingColor = Color3.fromRGB(255, 255, 255)
+            -- Fix: Check if pingLabel exists before trying to use it
+            if UI.State.pingLabel then
+                local ping = math.floor(game.Players.LocalPlayer:GetNetworkPing() * 1000)
+                local pingColor = Color3.fromRGB(255, 255, 255)
 
-            if ping < 50 then
-                pingColor = Color3.fromRGB(0, 255, 0)
-            elseif ping < 100 then
-                pingColor = Color3.fromRGB(255, 255, 0)
-            elseif ping < 200 then
-                pingColor = Color3.fromRGB(255, 165, 0)
-            else
-                pingColor = Color3.fromRGB(255, 0, 0)
+                if ping < 50 then
+                    pingColor = Color3.fromRGB(0, 255, 0)
+                elseif ping < 100 then
+                    pingColor = Color3.fromRGB(255, 255, 0)
+                elseif ping < 200 then
+                    pingColor = Color3.fromRGB(255, 165, 0)
+                else
+                    pingColor = Color3.fromRGB(255, 0, 0)
+                end
+
+                UI.State.pingLabel.TextColor3 = pingColor
+                UI.State.pingLabel.Text = string.format("🏓 %dms", ping)
             end
-
-            UI.State.pingLabel.TextColor3 = pingColor
-            UI.State.pingLabel.Text = string.format("🏓 %dms", ping)
 
             task.wait(1)
         end
