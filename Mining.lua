@@ -133,17 +133,67 @@ function Mining:setupCargoUI()
     -- Create cargo UI using UI module's function
     if self.UI then
         print("Mining: UI module found, creating cargo GUI")
+        -- Call the static function correctly
         if self.UI.createOrePackCargoGUI then
             print("Mining: createOrePackCargoGUI function found")
-            self.State.cargoScreenGui, self.State.cargoFrame, self.State.cargoLabel = 
-                self.UI.createOrePackCargoGUI(self.Services.playerGui)
+            local screenGui, cargoFrame, cargoLabel = self.UI.createOrePackCargoGUI(self.Services.playerGui)
+            self.State.cargoScreenGui = screenGui
+            self.State.cargoFrame = cargoFrame
+            self.State.cargoLabel = cargoLabel
             print("Mining: Cargo GUI created successfully")
+            print("Mining: cargoLabel =", self.State.cargoLabel)
+            print("Mining: cargoLabel type =", type(self.State.cargoLabel))
+            if self.State.cargoLabel then
+                print("Mining: cargoLabel.Name =", self.State.cargoLabel.Name)
+            end
         else
             warn("Mining: createOrePackCargoGUI function not found in UI module")
+            -- Fallback: create cargo UI directly
+            Mining:createFallbackCargoUI()
         end
     else
         warn("Mining: UI module not available, cargo display disabled")
+        -- Fallback: create cargo UI directly
+        Mining:createFallbackCargoUI()
     end
+end
+
+function Mining:createFallbackCargoUI()
+    print("Mining: Creating fallback cargo UI")
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "OrePackCargoGUI_Fallback"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = self.Services.playerGui
+
+    local cargoFrame = Instance.new("Frame")
+    cargoFrame.Name = "CargoFrame"
+    cargoFrame.Size = UDim2.new(0, 160, 0, 40)
+    cargoFrame.Position = UDim2.new(0, 10, 1, -40) -- Bottom-left
+    cargoFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    cargoFrame.BackgroundTransparency = 0.3
+    cargoFrame.BorderSizePixel = 0
+    cargoFrame.Parent = screenGui
+
+    -- Add rounded corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 6)
+    uiCorner.Parent = cargoFrame
+
+    local cargoLabel = Instance.new("TextLabel")
+    cargoLabel.Name = "CargoLabel"
+    cargoLabel.Size = UDim2.new(1, 0, 1, 0)
+    cargoLabel.BackgroundTransparency = 1
+    cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    cargoLabel.TextSize = 24
+    cargoLabel.Font = Enum.Font.SourceSansBold
+    cargoLabel.Text = "Loading..."
+    cargoLabel.Parent = cargoFrame
+
+    self.State.cargoScreenGui = screenGui
+    self.State.cargoFrame = cargoFrame
+    self.State.cargoLabel = cargoLabel
+    print("Mining: Fallback cargo UI created successfully")
 end
 
 function Mining:setupTimerUI()
