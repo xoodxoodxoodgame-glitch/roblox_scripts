@@ -588,6 +588,7 @@ function ESP:addPlayer(Player)
 
     ESP.State.PlayerESPBillboards[Player] = Billboard
 
+    local LocalPlayer = ESP.Services.Players.LocalPlayer
     local LocalRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local LocalPosition = LocalRootPart and LocalRootPart.Position
     local Distance = ESP:getDistanceToCharacter(LocalPosition, Character)
