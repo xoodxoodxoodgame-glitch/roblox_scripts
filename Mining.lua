@@ -140,21 +140,29 @@ function Mining:setupCargoUI()
             self.State.cargoScreenGui = screenGui
             self.State.cargoFrame = cargoFrame
             self.State.cargoLabel = cargoLabel
-            print("Mining: Cargo GUI created successfully")
+            print("Mining: Cargo GUI created successfully via UI module")
             print("Mining: cargoLabel =", self.State.cargoLabel)
             print("Mining: cargoLabel type =", type(self.State.cargoLabel))
             if self.State.cargoLabel then
                 print("Mining: cargoLabel.Name =", self.State.cargoLabel.Name)
+            else
+                warn("Mining: cargoLabel is still nil after UI module call - using fallback")
+                self:createFallbackCargoUI()
             end
         else
-            warn("Mining: createOrePackCargoGUI function not found in UI module")
+            warn("Mining: createOrePackCargoGUI function not found in UI module. Attempting fallback.")
             -- Fallback: create cargo UI directly
-            Mining:createFallbackCargoUI()
+            self:createFallbackCargoUI()
         end
     else
-        warn("Mining: UI module not available, cargo display disabled")
+        warn("Mining: UI module not available. Attempting fallback.")
         -- Fallback: create cargo UI directly
-        Mining:createFallbackCargoUI()
+        self:createFallbackCargoUI()
+    end
+
+    if not self.State.cargoLabel then
+        warn("Mining: cargoLabel is nil after setupCargoUI completion - forcing fallback")
+        self:createFallbackCargoUI()
     end
 end
 
@@ -194,6 +202,8 @@ function Mining:createFallbackCargoUI()
     self.State.cargoFrame = cargoFrame
     self.State.cargoLabel = cargoLabel
     print("Mining: Fallback cargo UI created successfully")
+    print("Mining: Fallback cargoLabel =", self.State.cargoLabel)
+    print("Mining: Fallback cargoLabel.Name =", self.State.cargoLabel.Name)
 end
 
 function Mining:setupTimerUI()
