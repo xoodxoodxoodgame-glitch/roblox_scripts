@@ -594,6 +594,8 @@ function Mining:startTimerLoop()
                     else
                         self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                     end
+                else
+                    print("error")
                 end
             end
         end
