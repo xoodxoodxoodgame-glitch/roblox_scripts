@@ -670,6 +670,16 @@ function Mining:startMiningLoop()
                                 local success, result = self:mineTarget(gridPos)
 
                                 if success then
+                                    -- Remove the ore from cache immediately after mining
+                                    if self.State.cachedOres[bestOre] then
+                                        self.State.cachedOres[bestOre] = nil
+                                        if self.Config.ActiveHighlights[bestOre] then
+                                            self:releaseHighlight(self.Config.ActiveHighlights[bestOre])
+                                            self.Config.ActiveHighlights[bestOre] = nil
+                                        end
+                                        self:removeOreIdCache(bestOre)
+                                    end
+                                    
                                     self.State.consecutiveFails = 0
                                     task.wait(result)
 
