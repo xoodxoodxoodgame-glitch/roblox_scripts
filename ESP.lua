@@ -294,10 +294,14 @@ function ESP:createESPHighlight(ore)
     local oreId = ESP:getCachedOreId(ore)
     -- This should use Mining module's data when available
     local oreData = {}
-    if ESP.Mining and ESP.Mining.MATERIAL_DATA then
-        oreData = ESP.Mining.MATERIAL_DATA[oreId] or {}
-    elseif ESP.MATERIAL_DATA then
-        oreData = ESP.MATERIAL_DATA[oreId] or {}
+    if ESP.Mining and ESP.Mining.MATERIAL_DATA and ESP.Mining.MATERIAL_DATA[oreId] then
+        oreData = ESP.Mining.MATERIAL_DATA[oreId]
+    elseif ESP.Mining and ESP.Mining.GEM_DATA and ESP.Mining.GEM_DATA[oreId] then
+        oreData = ESP.Mining.GEM_DATA[oreId]
+    elseif ESP.MATERIAL_DATA and ESP.MATERIAL_DATA[oreId] then
+        oreData = ESP.MATERIAL_DATA[oreId]
+    elseif ESP.GEM_DATA and ESP.GEM_DATA[oreId] then
+        oreData = ESP.GEM_DATA[oreId]
     end
     local oreColor = oreData and oreData.color or Color3.fromRGB(255, 255, 255)
 
@@ -333,8 +337,12 @@ function ESP:createESPBillboard(groupKey, groupData)
             local oreName = "Unknown"
             if ESP.Mining and ESP.Mining.MATERIAL_DATA and ESP.Mining.MATERIAL_DATA[groupData.oreId] then
                 oreName = ESP.Mining.MATERIAL_DATA[groupData.oreId].name
+            elseif ESP.Mining and ESP.Mining.GEM_DATA and ESP.Mining.GEM_DATA[groupData.oreId] then
+                oreName = ESP.Mining.GEM_DATA[groupData.oreId].name
             elseif ESP.MATERIAL_DATA and ESP.MATERIAL_DATA[groupData.oreId] then
                 oreName = ESP.MATERIAL_DATA[groupData.oreId].name
+            elseif ESP.GEM_DATA and ESP.GEM_DATA[groupData.oreId] then
+                oreName = ESP.GEM_DATA[groupData.oreId].name
             end
 
             local isMineable = ESP:isOreMineable(groupData.oreId)
