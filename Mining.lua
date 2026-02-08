@@ -584,13 +584,16 @@ function Mining:startTimerLoop()
                 local maxCapacity = self:calculateMaxCapacity(orePackCargo)
                 local timerText = self.State.cachedTimerLabel and self.State.cachedTimerLabel.Text or "--:--"
                 local boostText = self.Config.boostEnabled and string.format("B:%d", self.Config.BoostSpeed) or "B:OFF"
-                self.State.cargoLabel.Text = string.format("%d/%d : %s : %s", currentItems, maxCapacity, timerText, boostText)
-                if currentItems >= maxCapacity then
-                    self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-                elseif currentItems >= maxCapacity * 0.8 then
-                    self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-                else
-                    self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                -- Fix: Check if cargoLabel exists before trying to use it
+                if self.State.cargoLabel then
+                    self.State.cargoLabel.Text = string.format("%d/%d : %s : %s", currentItems, maxCapacity, timerText, boostText)
+                    if currentItems >= maxCapacity then
+                        self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+                    elseif currentItems >= maxCapacity * 0.8 then
+                        self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                    else
+                        self.State.cargoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    end
                 end
             end
         end
