@@ -29,6 +29,9 @@ function UI.init(State, Config, Fluent, SaveManager, InterfaceManager)
     UI:createMainTab()
     UI:createPlayerESPTab()
     
+    -- Setup ping display
+    UI:setupPingDisplay()
+    
     return UI
 end
 
@@ -312,6 +315,39 @@ function UI.createPingDisplay(playerGui)
     pingLabel.Parent = pingFrame
 
     return pingScreenGui, pingFrame, pingLabel
+end
+
+function UI:setupPingDisplay()
+    -- Create ping display GUI using the existing function
+    UI.State.pingScreenGui, UI.State.pingFrame, UI.State.pingLabel = 
+        UI.createPingDisplay(UI.State.playerGui)
+    
+    -- Start ping update loop
+    UI:startPingUpdateLoop()
+end
+
+function UI:startPingUpdateLoop()
+    task.spawn(function()
+        while UI.State.pingScreenGui and UI.State.pingScreenGui.Parent do
+            local ping = math.floor(game.Players.LocalPlayer:GetNetworkPing() * 1000)
+            local pingColor = Color3.fromRGB(255, 255, 255)
+
+            if ping < 50 then
+                pingColor = Color3.fromRGB(0, 255, 0)
+            elseif ping < 100 then
+                pingColor = Color3.fromRGB(255, 255, 0)
+            elseif ping < 200 then
+                pingColor = Color3.fromRGB(255, 165, 0)
+            else
+                pingColor = Color3.fromRGB(255, 0, 0)
+            end
+
+            UI.State.pingLabel.TextColor3 = pingColor
+            UI.State.pingLabel.Text = string.format("🏓 %dms", ping)
+
+            task.wait(1)
+        end
+    end)
 end
 
 return UI
