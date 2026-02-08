@@ -360,17 +360,6 @@ function Mining:mineTarget(gridPos, oreToRemove)
         local elapsedTime = tick() - startTime
         local delay = math.max(0, miningTime - elapsedTime)
 
-        -- Remove ore from cache immediately after successful invoke
-        if success and oreToRemove then
-            if self.State.cachedOres[oreToRemove] then
-                self.State.cachedOres[oreToRemove] = nil
-                if self.Config.ActiveHighlights[oreToRemove] then
-                    self:releaseHighlight(self.Config.ActiveHighlights[oreToRemove])
-                    self.Config.ActiveHighlights[oreToRemove] = nil
-                end
-                self:removeOreIdCache(oreToRemove)
-            end
-        end
 
         local targetType = targetInfo.isTerrain and "Terrain " or ""
         local targetName = targetInfo.blockDefinition.Name or (targetInfo.isTerrain and targetInfo.cellData.Block) or targetInfo.oreData.name
@@ -682,15 +671,41 @@ function Mining:startMiningLoop()
                                 local success, result = self:mineTarget(gridPos, bestOre)
 
                                 if success then
-                                    self.State.consecutiveFails = 0
+                                    -- Verify the ore was actually mined by checking terrain
                                     task.wait(result)
-
-                                    local tool = self:GetTool()
-                                    if tool then
-                                        local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
-                                        if pickaxeClient and pickaxeClient.SwingAnimTrack then
-                                            pickaxeClient.SwingAnimTrack:Stop()
+                                    
+                                    local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
+                                    local postMineCellData = mineTerrainInstance:Get(gridPos)
+                                    
+                                    -- Check if mining actually succeeded (block should be gone or changed)
+                                    local actuallyMined = not postMineCellData or 
+                                        (postMineCellData.Block ~= "Air" and postMineCellData.Ore == nil) or
+                                        (postMineCellData.Block == "Air")
+                                    
+                                    if actuallyMined then
+                                        -- Ore was successfully mined, remove from cache
+                                        if self.State.cachedOres[bestOre] then
+                                            self.State.cachedOres[bestOre] = nil
+                                            if self.Config.ActiveHighlights[bestOre] then
+                                                self:releaseHighlight(self.Config.ActiveHighlights[bestOre])
+                                                self.Config.ActiveHighlights[bestOre] = nil
+                                            end
+                                            self:removeOreIdCache(bestOre)
                                         end
+                                        
+                                        self.State.consecutiveFails = 0
+                                        
+                                        local tool = self:GetTool()
+                                        if tool then
+                                            local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
+                                            if pickaxeClient and pickaxeClient.SwingAnimTrack then
+                                                pickaxeClient.SwingAnimTrack:Stop()
+                                            end
+                                        end
+                                    else
+                                        -- Mining appeared to succeed but terrain didn't change, treat as failure
+                                        self.State.consecutiveFails = self.State.consecutiveFails + 1
+                                        warn("Mining invoke succeeded but terrain unchanged, treating as failure")
                                     end
                                 else
                                     self.State.consecutiveFails = self.State.consecutiveFails + 1
