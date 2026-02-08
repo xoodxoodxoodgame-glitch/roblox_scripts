@@ -680,7 +680,7 @@ function Mining:startMiningLoop()
                                     
                                     local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                     local postMineCellData = mineTerrainInstance:Get(gridPos)
-                                    
+                                    print("Post mine cell data:", postMineCellData)
                                     -- Mining succeeded if the ore was removed (Ore field became nil)
                                     local oreWasRemoved = preMineCellData and preMineCellData.Ore and 
                                         (not postMineCellData or not postMineCellData.Ore)
