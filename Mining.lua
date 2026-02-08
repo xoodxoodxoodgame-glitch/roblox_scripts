@@ -317,7 +317,7 @@ function Mining:getPickaxeClientFromToolModel(toolModel)
     return toolObj:FindComponentByName("PickaxeClient")
 end
 
-function Mining:mineTarget(gridPos)
+function Mining:mineTarget(gridPos, oreToRemove)
     local tool = self:GetTool()
     if not tool then
         return false, "No tool equipped"
@@ -360,6 +360,18 @@ function Mining:mineTarget(gridPos)
         local elapsedTime = tick() - startTime
         local delay = math.max(0, miningTime - elapsedTime)
 
+        -- Remove ore from cache immediately after successful invoke
+        if success and oreToRemove then
+            if self.State.cachedOres[oreToRemove] then
+                self.State.cachedOres[oreToRemove] = nil
+                if self.Config.ActiveHighlights[oreToRemove] then
+                    self:releaseHighlight(self.Config.ActiveHighlights[oreToRemove])
+                    self.Config.ActiveHighlights[oreToRemove] = nil
+                end
+                self:removeOreIdCache(oreToRemove)
+            end
+        end
+
         local targetType = targetInfo.isTerrain and "Terrain " or ""
         local targetName = targetInfo.blockDefinition.Name or (targetInfo.isTerrain and targetInfo.cellData.Block) or targetInfo.oreData.name
    
@@ -374,7 +386,7 @@ function Mining:mineTarget(gridPos)
             elapsedTime,
             delay))
 
-        return true, delay
+        return success, delay
     else
         local blockName = targetInfo.isTerrain and targetInfo.cellData.Block or targetInfo.oreData.name
         warn(string.format("⚠️ Block '%s' has no hardness data - skipping", blockName))
@@ -667,19 +679,9 @@ function Mining:startMiningLoop()
                                 local grid = self:worldToGridIndex(bestOre:GetPivot())
                                 local gridPos = Vector3int16.new(grid.X, grid.Y, grid.Z)
 
-                                local success, result = self:mineTarget(gridPos)
+                                local success, result = self:mineTarget(gridPos, bestOre)
 
                                 if success then
-                                    -- Remove the ore from cache immediately after mining
-                                    if self.State.cachedOres[bestOre] then
-                                        self.State.cachedOres[bestOre] = nil
-                                        if self.Config.ActiveHighlights[bestOre] then
-                                            self:releaseHighlight(self.Config.ActiveHighlights[bestOre])
-                                            self.Config.ActiveHighlights[bestOre] = nil
-                                        end
-                                        self:removeOreIdCache(bestOre)
-                                    end
-                                    
                                     self.State.consecutiveFails = 0
                                     task.wait(result)
 
