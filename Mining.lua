@@ -668,21 +668,24 @@ function Mining:startMiningLoop()
                                 local grid = self:worldToGridIndex(bestOre:GetPivot())
                                 local gridPos = Vector3int16.new(grid.X, grid.Y, grid.Z)
 
+                                -- Get terrain state before mining
+                                local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
+                                local preMineCellData = mineTerrainInstance:Get(gridPos)
+                                
                                 local success, result = self:mineTarget(gridPos, bestOre)
 
                                 if success then
-                                    -- Verify the ore was actually mined by checking terrain
+                                    -- Verify the ore was actually mined by checking if ore was removed from terrain
                                     task.wait(result)
                                     
                                     local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
                                     local postMineCellData = mineTerrainInstance:Get(gridPos)
                                     
-                                    -- Check if mining actually succeeded (block should be gone or changed)
-                                    local actuallyMined = not postMineCellData or 
-                                        (postMineCellData.Block ~= "Air" and postMineCellData.Ore == nil) or
-                                        (postMineCellData.Block == "Air")
+                                    -- Mining succeeded if the ore was removed (Ore field became nil)
+                                    local oreWasRemoved = preMineCellData and preMineCellData.Ore and 
+                                        (not postMineCellData or not postMineCellData.Ore)
                                     
-                                    if actuallyMined then
+                                    if oreWasRemoved then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
                                             self.State.cachedOres[bestOre] = nil
@@ -703,9 +706,9 @@ function Mining:startMiningLoop()
                                             end
                                         end
                                     else
-                                        -- Mining appeared to succeed but terrain didn't change, treat as failure
+                                        -- Mining appeared to succeed but ore wasn't removed from terrain, treat as failure
                                         self.State.consecutiveFails = self.State.consecutiveFails + 1
-                                        warn("Mining invoke succeeded but terrain unchanged, treating as failure")
+                                        warn("Mining invoke succeeded but ore not removed from terrain, treating as failure")
                                     end
                                 else
                                     self.State.consecutiveFails = self.State.consecutiveFails + 1
