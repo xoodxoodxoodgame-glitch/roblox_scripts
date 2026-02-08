@@ -572,59 +572,65 @@ function ESP:updateTracer(Player, Character)
 end
 
 function ESP:setBillboardText(Player, Distance)
-    local Billboard = ESP.State.PlayerESPBillboards[Player]
-    if not Billboard then return end
-    local TextLabel = Billboard:FindFirstChildOfClass("TextLabel")
-    if not TextLabel then return end
+    local success, errorMsg = pcall(function()
+        local Billboard = ESP.State.PlayerESPBillboards[Player]
+        if not Billboard then return end
+        local TextLabel = Billboard:FindFirstChildOfClass("TextLabel")
+        if not TextLabel then return end
 
-    if Distance then
-        local nearDistance = 700
-        local farDistance = 1000
-        local minScale = 0.15
-        local maxScale = 1.0
+        if Distance then
+            local nearDistance = 700
+            local farDistance = 1000
+            local minScale = 0.15
+            local maxScale = 1.0
 
-        local scale
-        if Distance <= nearDistance then
-            scale = maxScale
-        elseif Distance >= farDistance then
-            scale = minScale
+            local scale
+            if Distance <= nearDistance then
+                scale = maxScale
+            elseif Distance >= farDistance then
+                scale = minScale
+            else
+                local t = (Distance - nearDistance) / (farDistance - nearDistance)
+                scale = maxScale - (t * (maxScale - minScale))
+            end
+
+            local opacity = math.max(0.3, math.min(1.0, 1000 / (Distance + 100)))
+
+            Billboard.Size = UDim2.new(0, 200 * scale, 0, 50 * scale)
+            TextLabel.TextTransparency = 1 - opacity
+            TextLabel.TextStrokeTransparency = 1 - opacity
         else
-            local t = (Distance - nearDistance) / (farDistance - nearDistance)
-            scale = maxScale - (t * (maxScale - minScale))
+            Billboard.Size = UDim2.new(0, 200, 0, 50)
+            TextLabel.TextTransparency = 0
+            TextLabel.TextStrokeTransparency = 0
         end
 
-        local opacity = math.max(0.3, math.min(1.0, 1000 / (Distance + 100)))
+        local isFriend = ESP.State.friendshipCache[Player.UserId]
+        if isFriend == nil then
+            isFriend = ESP.Services.player:IsFriendsWith(Player.UserId)
+            ESP.State.friendshipCache[Player.UserId] = isFriend
+        end
+        TextLabel.TextColor3 = isFriend and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
 
-        Billboard.Size = UDim2.new(0, 200 * scale, 0, 50 * scale)
-        TextLabel.TextTransparency = 1 - opacity
-        TextLabel.TextStrokeTransparency = 1 - opacity
-    else
-        Billboard.Size = UDim2.new(0, 200, 0, 50)
-        TextLabel.TextTransparency = 0
-        TextLabel.TextStrokeTransparency = 0
-    end
+        local NamePart = ESP.State.PlayerESPShowName and ESP:getDisplayName(Player) or nil
+        local DistancePart = nil
+        if ESP.State.PlayerESPShowDistance then
+            DistancePart = Distance and string.format("%.1f", Distance) or "?"
+        end
 
-    local isFriend = ESP.State.friendshipCache[Player.UserId]
-    if isFriend == nil then
-        isFriend = ESP.Services.player:IsFriendsWith(Player.UserId)
-        ESP.State.friendshipCache[Player.UserId] = isFriend
-    end
-    TextLabel.TextColor3 = isFriend and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
-
-    local NamePart = ESP.State.PlayerESPShowName and ESP:getDisplayName(Player) or nil
-    local DistancePart = nil
-    if ESP.State.PlayerESPShowDistance then
-        DistancePart = Distance and string.format("%.1f", Distance) or "?"
-    end
-
-    if NamePart and DistancePart then
-        TextLabel.Text = NamePart .. " | " .. DistancePart
-    elseif NamePart then
-        TextLabel.Text = NamePart
-    elseif DistancePart then
-        TextLabel.Text = DistancePart
-    else
-        TextLabel.Text = ""
+        if NamePart and DistancePart then
+            TextLabel.Text = NamePart .. " | " .. DistancePart
+        elseif NamePart then
+            TextLabel.Text = NamePart
+        elseif DistancePart then
+            TextLabel.Text = DistancePart
+        else
+            TextLabel.Text = ""
+        end
+    end)
+    
+    if not success then
+        warn("ESP:setBillboardText error: " .. tostring(errorMsg))
     end
 end
 
