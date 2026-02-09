@@ -721,7 +721,8 @@ function Mining:startMiningLoop()
                                         if tool then
                                             local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
                                             if pickaxeClient then
-                                                local oreId = self:getCachedOreId(bestOre)
+                                                -- Get ore ID directly from the ore object
+                                                local oreId = bestOre:GetAttribute("MineId") or bestOre.Name
                                                 local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
                                                 print("Creating ore text for:", oreId, "BlockDef:", blockDef, "IngredientId:", blockDef.IngredientId)
                                                 pickaxeClient:CreateOreAddedText(blockDef, worldPos)
