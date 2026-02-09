@@ -361,11 +361,6 @@ function Mining:mineTarget(gridPos)
         local delay = math.max(0, miningTime - elapsedTime)
 
         if success then
-            -- Add visual feedback and sound like the built-in pickaxe
-            local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
-            pickaxeClient:CreateOreAddedText(targetInfo.blockDefinition, worldPos)
-            pickaxeClient.BreakSound:Play()
-            
             -- Wait for the mining delay before returning
             task.wait(delay)
             
@@ -389,13 +384,18 @@ function Mining:mineTarget(gridPos)
                 end
             end
             
-            if not terrainChanged then
+            if terrainChanged then
+                -- Add visual feedback and sound only after confirmed mining success
+                local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
+                pickaxeClient:CreateOreAddedText(targetInfo.blockDefinition, worldPos)
+                pickaxeClient.BreakSound:Play()
+                
+                return true, delay
+            else
                 -- Mining appeared to succeed but terrain didn't change, treat as failure
                 warn("Mining invoke succeeded but terrain unchanged, treating as failure")
                 return false, "Terrain verification failed"
             end
-            
-            return true, delay
         end
 
 
