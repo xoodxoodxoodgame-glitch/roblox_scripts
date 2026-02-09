@@ -86,11 +86,9 @@ function Movement:setupMovement()
                     if pickaxeClient then
                         pickaxeClient:ActivateEnded()
                     else
-                        print("[Movement] PickaxeClient not ready for tool")
-                    end
+                                            end
                 else
-                    print("[Movement] No tool equipped")
-                end
+                                    end
             else
                 Movement.State.isAutoTunnel = true
                 
@@ -106,11 +104,9 @@ function Movement:setupMovement()
                     if pickaxeClient then
                         pickaxeClient:ActivateStarted()
                     else
-                        print("[Movement] PickaxeClient not ready for tool")
-                    end
+                                            end
                 else
-                    print("[Movement] No tool equipped")
-                end
+                                    end
             end
         end
 
