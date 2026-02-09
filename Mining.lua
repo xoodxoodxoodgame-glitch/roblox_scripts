@@ -690,6 +690,7 @@ function Mining:startMiningLoop()
                                 local success, result = self:mineTarget(gridPos)
 
                                 if success then
+                                    print("Mining succeeded")
                                     -- Verify the ore was actually mined by checking if it was added to backpack
                                     -- Note: mining delay is now handled inside mineTarget
 
@@ -700,7 +701,7 @@ function Mining:startMiningLoop()
 
                                     -- Mining succeeded if backpack gained an item
                                     local backpackGainedItem = backpackCountAfter > backpackCountBefore
-
+                                    print("Mining result: " .. tostring(backpackGainedItem))
                                     if backpackGainedItem then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
