@@ -247,7 +247,7 @@ function Movement:toggleMovementLoop()
                 if horizontalDir.Magnitude >= 1e-6 then
                     local flatForward = horizontalDir.Unit
                     local characterPos = rootPart.Position
-                    local targetPos = characterPos + flatForward * 10
+                    local targetPos = characterPos + flatForward * (distance - 0.5)
 
            
                     local terrain = Movement.Services.Workspace.Terrain
