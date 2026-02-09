@@ -723,6 +723,7 @@ function Mining:startMiningLoop()
                                             if pickaxeClient then
                                                 local oreId = self:getCachedOreId(bestOre)
                                                 local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
+                                                print("Creating ore text for:", oreId, "BlockDef:", blockDef, "IngredientId:", blockDef.IngredientId)
                                                 pickaxeClient:CreateOreAddedText(blockDef, worldPos)
                                                 pickaxeClient.BreakSound:Play()
                                                 if pickaxeClient.SwingAnimTrack then
