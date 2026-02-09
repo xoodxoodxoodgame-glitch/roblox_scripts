@@ -269,7 +269,7 @@ function Movement:toggleMovementLoop()
     print("[Movement] Setting velocity - MoveSpeed:", moveSpeed, "Direction:", flatForward)
     rootPart.AssemblyLinearVelocity = Vector3.new(moveVelocity.X, currentVelocity.Y, moveVelocity.Z)
 
-    if distance > 5 then
+    if distance > 5 and distance <= 40 then
         local characterPos = rootPart.Position
         local targetPos = characterPos + flatForward * math.min(distance - 0.5, 10)
 
