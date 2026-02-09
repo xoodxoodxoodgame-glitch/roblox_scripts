@@ -680,37 +680,28 @@ function Mining:startMiningLoop()
                                 local grid = self:worldToGridIndex(bestOre:GetPivot())
                                 local gridPos = Vector3int16.new(grid.X, grid.Y, grid.Z)
 
-                                -- Get terrain state before mining
-                                local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
-                                local preMineCellData = mineTerrainInstance:Get(gridPos)
-                                
+                                -- Get backpack state before mining
+                                local orePackCargo = self:getOrePackCargo()
+                                local backpackCountBefore = 0
+                                if orePackCargo then
+                                    backpackCountBefore = self:countCurrentItems(orePackCargo)
+                                end
+
                                 local success, result = self:mineTarget(gridPos)
 
                                 if success then
-                                    -- Verify the ore was actually mined by checking terrain changes
+                                    -- Verify the ore was actually mined by checking if it was added to backpack
                                     -- Note: mining delay is now handled inside mineTarget
 
-                                    local mineTerrainInstance = self.Services.MineTerrain.GetInstance()
-                                    local postMineCellData = mineTerrainInstance:Get(gridPos)
-                                    
-                                    -- Mining succeeded if terrain changed (ore removed, block became air, etc.)
-                                    local terrainChanged = false
-                                    
-                                    if not preMineCellData and postMineCellData then
-                                        terrainChanged = true -- Block appeared
-                                    elseif preMineCellData and not postMineCellData then
-                                        terrainChanged = true -- Block disappeared
-                                    elseif preMineCellData and postMineCellData then
-                                        -- Check if ore was removed or block changed
-                                        local oreChanged = (preMineCellData.Ore or "") ~= (postMineCellData.Ore or "")
-                                        local blockChanged = preMineCellData.Block ~= postMineCellData.Block
-                                        
-                                        if oreChanged or blockChanged then
-                                            terrainChanged = true
-                                        end
+                                    local backpackCountAfter = 0
+                                    if orePackCargo then
+                                        backpackCountAfter = self:countCurrentItems(orePackCargo)
                                     end
 
-                                    if terrainChanged then
+                                    -- Mining succeeded if backpack gained an item
+                                    local backpackGainedItem = backpackCountAfter > backpackCountBefore
+
+                                    if backpackGainedItem then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
                                             self.State.cachedOres[bestOre] = nil
@@ -723,13 +714,15 @@ function Mining:startMiningLoop()
                                         
                                         self.State.consecutiveFails = 0
                                         
-                                        -- Add visual feedback and sound only when terrain actually changed
+                                        -- Add visual feedback and sound only when ore was actually added to backpack
                                         local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
                                         local tool = self:GetTool()
                                         if tool then
                                             local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
                                             if pickaxeClient then
-                                                pickaxeClient:CreateOreAddedText(preMineCellData.Ore and self.Services.BlockDefinitions[preMineCellData.Ore] or self.Services.BlockDefinitions[preMineCellData.Block], worldPos)
+                                                local oreId = self:getCachedOreId(bestOre)
+                                                local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
+                                                pickaxeClient:CreateOreAddedText(blockDef, worldPos)
                                                 pickaxeClient.BreakSound:Play()
                                                 if pickaxeClient.SwingAnimTrack then
                                                     pickaxeClient.SwingAnimTrack:Stop()
@@ -737,9 +730,9 @@ function Mining:startMiningLoop()
                                             end
                                         end
                                     else
-                                        -- Mining appeared to succeed but terrain didn't change, treat as failure
+                                        -- Mining appeared to succeed but backpack didn't gain item, treat as failure
                                         self.State.consecutiveFails = self.State.consecutiveFails + 1
-                                        warn("Mining invoke succeeded but terrain unchanged, treating as failure")
+                                        warn("Mining invoke succeeded but backpack unchanged, treating as failure")
                                     end
                                 else
                                     self.State.consecutiveFails = self.State.consecutiveFails + 1
