@@ -688,7 +688,7 @@ function Mining:startMiningLoop()
                                 end
 
                                 local success, result = self:mineTarget(gridPos)
-
+                                print("Mining result: " .. tostring(success), result)
                                 if success then
                                     print("Mining succeeded")
                                     -- Verify the ore was actually mined by checking if it was added to backpack
