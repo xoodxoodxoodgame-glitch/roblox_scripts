@@ -269,7 +269,7 @@ function Movement:toggleMovementLoop()
 
                     if Movement.Mining and Movement.Mining.mineTarget then
                         print("[Movement] Calling Mining.mineTarget with gridPos:", gridPos)
-                        Movement.Mining.mineTarget(gridPos)
+                        Movement.Mining:mineTarget(gridPos)
                     else
                         print("[Movement] Mining module or mineTarget function not available")
                     end
