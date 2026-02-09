@@ -688,9 +688,7 @@ function Mining:startMiningLoop()
                                 end
 
                                 local success, result = self:mineTarget(gridPos)
-                                print("Mining result: " .. tostring(success), result)
                                 if success then
-                                    print("Mining succeeded")
                                     -- Verify the ore was actually mined by checking if it was added to backpack
                                     -- Note: mining delay is now handled inside mineTarget
 
@@ -701,7 +699,6 @@ function Mining:startMiningLoop()
 
                                     -- Mining succeeded if backpack gained an item
                                     local backpackGainedItem = backpackCountAfter > backpackCountBefore
-                                    print("Mining result: " .. tostring(backpackGainedItem))
                                     if backpackGainedItem then
                                         -- Ore was successfully mined, remove from cache
                                         if self.State.cachedOres[bestOre] then
@@ -724,7 +721,7 @@ function Mining:startMiningLoop()
                                                 -- Get ore ID directly from the ore object
                                                 local oreId = bestOre:GetAttribute("MineId") or bestOre.Name
                                                 local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
-                                                print("Creating ore text for:", oreId, "BlockDef:", blockDef, "IngredientId:", blockDef.IngredientId)
+                                                
                                                 pickaxeClient:CreateOreAddedText(blockDef, worldPos)
                                                 pickaxeClient.BreakSound:Play()
                                                 if pickaxeClient.SwingAnimTrack then
