@@ -79,6 +79,14 @@ function Movement:setupMovement()
                 Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default
                 Movement.Services.UserInputService.MouseIconEnabled = true
                 print("[DEBUG] Toggle movement disabled - mouse unlocked")
+                
+                -- Call ActivateEnded when auto-tunnel stops
+                if Movement.Mining and Movement.Mining.ActivateEnded then
+                    print("[Movement] Calling Mining.ActivateEnded")
+                    Movement.Mining:ActivateEnded()
+                else
+                    print("[Movement] Mining module or ActivateEnded function not available")
+                end
             else
                 Movement.State.isAutoTunnel = true
                 
@@ -87,6 +95,14 @@ function Movement:setupMovement()
                 Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
                 Movement.Services.UserInputService.MouseIconEnabled = false
                 print("[DEBUG] Toggle movement enabled - mouse locked")
+                
+                -- Trigger mining activation once when auto-tunnel starts
+                if Movement.Mining and Movement.Mining.ActivateStarted then
+                    print("[Movement] Calling Mining.ActivateStarted")
+                    Movement.Mining:ActivateStarted()
+                else
+                    print("[Movement] Mining module or ActivateStarted function not available")
+                end
             end
         end
 
@@ -249,47 +265,7 @@ function Movement:toggleMovementLoop()
     local distance = Movement:checkWallDistance()
 
     if distance <= 5 then
-        
-        -- Mine blocks when close to wall
-        local humanoid = Movement:getCurrentHumanoid()
-        local rootPart = Movement:getCurrentRootPart()
-
-        if humanoid and rootPart then
-            local camera = Movement.Services.Workspace.CurrentCamera
-            if camera then
-                local forwardDirection = camera.CFrame.LookVector
-                local horizontalDir = Vector3.new(forwardDirection.X, 0, forwardDirection.Z)
-
-                if horizontalDir.Magnitude >= 1e-6 then
-                    local flatForward = horizontalDir.Unit
-                    local characterPos = rootPart.Position
-                    local targetPos = characterPos + flatForward * 5
-
-           
-                    local terrain = Movement.Services.Workspace.Terrain
-                    local terrainCell = terrain:WorldToCell(targetPos)
-                    local gridPos = Vector3int16.new(terrainCell.X, terrainCell.Y, terrainCell.Z)
-
-                    print("[Movement] Terrain cell:", terrainCell, "Grid position:", gridPos)
-
-                    local cellCenter = terrain:CellCenterToWorld(terrainCell.X, terrainCell.Y, terrainCell.Z)
-                    local toCenter = cellCenter - rootPart.Position
-
-                    if toCenter.Magnitude > 1e-6 then
-                        Movement.State.autoTunnelLookDirection = Vector3.new(toCenter.X, 0, toCenter.Z).Unit
-                    end
-
-                    if Movement.Mining and Movement.Mining.mineTarget then
-                        print("[Movement] Calling Mining.mineTarget with gridPos:", gridPos)
-                        local result, delay = Movement.Mining:mineTarget(gridPos)
-                        print("Result and Delay:", result, delay)
-                    else
-                        print("[Movement] Mining module or mineTarget function not available")
-                    end
-                end
-            end
-        end
-        
+        print("[Movement] Distance too small (<=5), stopping movement")
         Movement:stopToggleMovement()
         return
     end
@@ -324,6 +300,6 @@ function Movement:toggleMovementLoop()
     print("[Movement] Setting velocity - MoveSpeed:", moveSpeed, "Direction:", flatForward)
     rootPart.AssemblyLinearVelocity = Vector3.new(moveVelocity.X, currentVelocity.Y, moveVelocity.Z)
 
-    end
+end
 
 return Movement
