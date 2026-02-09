@@ -2,9 +2,15 @@
 local Movement = {}
 
 function Movement.init(State, Config, Services)
-    Movement.State = State
-    Movement.Config = Config
+    Movement.State = State or {}
+    Movement.Config = Config or {}
     Movement.Services = Services or {}
+    
+    -- Initialize mouse lock state
+    Movement.State.mouseLocked = false
+    
+    local player = Movement.Services.player
+    local UserInputService = Movement.Services.UserInputService
     
     -- Setup movement controls
     Movement:setupMovement()
@@ -62,15 +68,25 @@ function Movement:setupMovement()
                 Movement:setBoostSpeed(Movement.State.savedBoostSpeed)
             end
         elseif input.KeyCode == Enum.KeyCode.H then
-            -- Toggle movement
+            -- Toggle movement and mouse lock
             if Movement.State.isAutoTunnel then
                 Movement.State.isAutoTunnel = false
                 Movement.State.autoTunnelLookDirection = nil
                 Movement:stopToggleMovement()
-                print("[DEBUG] Toggle movement disabled")
+                
+                -- Unlock mouse when auto-tunnel disabled
+                Movement.State.mouseLocked = false
+                Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+                Movement.Services.UserInputService.MouseIconEnabled = true
+                print("[DEBUG] Toggle movement disabled - mouse unlocked")
             else
                 Movement.State.isAutoTunnel = true
-                print("[DEBUG] Toggle movement enabled")
+                
+                -- Lock mouse when auto-tunnel enabled
+                Movement.State.mouseLocked = true
+                Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+                Movement.Services.UserInputService.MouseIconEnabled = false
+                print("[DEBUG] Toggle movement enabled - mouse locked")
             end
         end
 
@@ -247,7 +263,7 @@ function Movement:toggleMovementLoop()
                 if horizontalDir.Magnitude >= 1e-6 then
                     local flatForward = horizontalDir.Unit
                     local characterPos = rootPart.Position
-                    local targetPos = characterPos + flatForward * (distance - 0.5)
+                    local targetPos = characterPos + flatForward * 5
 
            
                     local terrain = Movement.Services.Workspace.Terrain
