@@ -78,14 +78,12 @@ function Movement:setupMovement()
                 Movement.State.mouseLocked = false
                 Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default
                 Movement.Services.UserInputService.MouseIconEnabled = true
-                print("[DEBUG] Toggle movement disabled - mouse unlocked")
-                
+                        
                 -- Call ActivateEnded when auto-tunnel stops
                 local tool = Movement.Mining:GetTool()
                 if tool then
                     local pickaxeClient = Movement.Mining:getPickaxeClientFromToolModel(tool)
                     if pickaxeClient then
-                        print("[Movement] Calling pickaxeClient.ActivateEnded")
                         pickaxeClient:ActivateEnded()
                     else
                         print("[Movement] PickaxeClient not ready for tool")
@@ -100,14 +98,12 @@ function Movement:setupMovement()
                 Movement.State.mouseLocked = true
                 Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
                 Movement.Services.UserInputService.MouseIconEnabled = false
-                print("[DEBUG] Toggle movement enabled - mouse locked")
                 
                 -- Trigger mining activation once when auto-tunnel starts
                 local tool = Movement.Mining:GetTool()
                 if tool then
                     local pickaxeClient = Movement.Mining:getPickaxeClientFromToolModel(tool)
                     if pickaxeClient then
-                        print("[Movement] Calling pickaxeClient.ActivateStarted")
                         pickaxeClient:ActivateStarted()
                     else
                         print("[Movement] PickaxeClient not ready for tool")
@@ -277,8 +273,7 @@ function Movement:toggleMovementLoop()
     local distance = Movement:checkWallDistance()
 
     if distance <= 5 then
-        print("[Movement] Distance too small (<=5), stopping movement")
-        Movement:stopToggleMovement()
+            Movement:stopToggleMovement()
         return
     end
 
@@ -286,22 +281,19 @@ function Movement:toggleMovementLoop()
     local rootPart = Movement:getCurrentRootPart()
 
     if not (humanoid and rootPart) then
-        print("[Movement] Missing humanoid or rootPart, returning")
-        return
+            return
     end
 
     local camera = Movement.Services.Workspace.CurrentCamera
     if not camera then
-        print("[Movement] No camera found, returning")
-        return
+            return
     end
 
     local forwardDirection = camera.CFrame.LookVector
     local horizontalDir = Vector3.new(forwardDirection.X, 0, forwardDirection.Z)
 
     if horizontalDir.Magnitude < 1e-6 then
-        print("[Movement] Horizontal direction too small, returning")
-        return
+            return
     end
 
     local flatForward = horizontalDir.Unit
@@ -309,7 +301,6 @@ function Movement:toggleMovementLoop()
     local moveSpeed = Movement.Config.BoostSpeed
     local moveVelocity = flatForward * moveSpeed
 
-    print("[Movement] Setting velocity - MoveSpeed:", moveSpeed, "Direction:", flatForward)
     rootPart.AssemblyLinearVelocity = Vector3.new(moveVelocity.X, currentVelocity.Y, moveVelocity.Z)
 
 end
