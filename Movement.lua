@@ -231,10 +231,8 @@ function Movement:toggleMovementLoop()
     end
 
     local distance = Movement:checkWallDistance()
-    print("[Movement] Wall distance:", distance)
 
     if distance <= 5 then
-        print("[Movement] Distance too small (<=5), stopping movement")
         
         -- Mine blocks when close to wall
         local humanoid = Movement:getCurrentHumanoid()
@@ -251,8 +249,7 @@ function Movement:toggleMovementLoop()
                     local characterPos = rootPart.Position
                     local targetPos = characterPos + flatForward * 2
 
-                    print("[Movement] Mining at close range - Character position:", characterPos, "Target position:", targetPos)
-
+           
                     local terrain = Movement.Services.Workspace.Terrain
                     local terrainCell = terrain:WorldToCell(targetPos)
                     local gridPos = Vector3int16.new(terrainCell.X, terrainCell.Y, terrainCell.Z)
@@ -264,12 +261,12 @@ function Movement:toggleMovementLoop()
 
                     if toCenter.Magnitude > 1e-6 then
                         Movement.State.autoTunnelLookDirection = Vector3.new(toCenter.X, 0, toCenter.Z).Unit
-                        print("[Movement] Updated look direction:", Movement.State.autoTunnelLookDirection)
                     end
 
                     if Movement.Mining and Movement.Mining.mineTarget then
                         print("[Movement] Calling Mining.mineTarget with gridPos:", gridPos)
-                        Movement.Mining:mineTarget(gridPos)
+                        local result, delay = Movement.Mining:mineTarget(gridPos)
+                        print("Result and Delay:", result, delay)
                     else
                         print("[Movement] Mining module or mineTarget function not available")
                     end
