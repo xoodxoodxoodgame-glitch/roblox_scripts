@@ -387,7 +387,7 @@ function Mining:mineTarget(gridPos)
             elapsedTime,
             delay))
 
-        return success, delay
+        return true, delay
     else
         local blockName = targetInfo.isTerrain and targetInfo.cellData.Block or targetInfo.oreData.name
         warn(string.format("⚠️ Block '%s' has no hardness data - skipping", blockName))
@@ -728,7 +728,11 @@ function Mining:startMiningLoop()
                                                 if pickaxeClient.SwingAnimTrack then
                                                     pickaxeClient.SwingAnimTrack:Stop()
                                                 end
+                                            else
+                                                warn("Pickaxe client not found for tool")
                                             end
+                                        else
+                                            warn("Tool not found")
                                         end
                                     else
                                         -- Mining appeared to succeed but backpack didn't gain item, treat as failure
