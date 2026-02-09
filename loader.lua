@@ -194,6 +194,7 @@ end
 
 if Movement then
     Movement.UI = UI
+    Movement.Mining = Mining
 end
 
 -- Setup SaveManager and InterfaceManager
