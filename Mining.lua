@@ -365,17 +365,24 @@ function Mining:mineTarget(gridPos)
             task.wait(delay)
         end
 
+        -- Calculate distance from player to ore
+        local distance = 0
+        if self.State.root then
+            local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
+            distance = (worldPos - self.State.root.Position).Magnitude
+        end
 
         local targetType = targetInfo.isTerrain and "Terrain " or ""
         local targetName = targetInfo.blockDefinition.Name or (targetInfo.isTerrain and targetInfo.cellData.Block) or targetInfo.oreData.name
    
-        print(string.format("⛏️ %s%s (H%d) | %s (%.0f/%.0f) | M: %.2fs | P: %.2fs | D: %.2fs",
+        print(string.format("⛏️ %s%s (H%d) | %s (%.0f/%.0f) | D: %.1fm | M: %.2fs | P: %.2fs | W: %.2fs",
             targetType,
             targetName,
             targetInfo.blockDefinition.Hardness,
             toolName,
             toolStats.strength,
             toolStats.speed,
+            distance,
             miningTime,
             elapsedTime,
             delay))
