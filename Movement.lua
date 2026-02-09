@@ -225,13 +225,16 @@ function Movement:checkWallDistance()
 end
 
 function Movement:toggleMovementLoop()
+    
     if not Movement.State.isAutoTunnel then
         return
     end
 
     local distance = Movement:checkWallDistance()
+    print("[Movement] Wall distance:", distance)
 
     if distance <= 5 then
+        print("[Movement] Distance too small (<=5), stopping movement")
         Movement:stopToggleMovement()
         return
     end
@@ -240,11 +243,13 @@ function Movement:toggleMovementLoop()
     local rootPart = Movement:getCurrentRootPart()
 
     if not (humanoid and rootPart) then
+        print("[Movement] Missing humanoid or rootPart, returning")
         return
     end
 
     local camera = Movement.Services.Workspace.CurrentCamera
     if not camera then
+        print("[Movement] No camera found, returning")
         return
     end
 
@@ -252,6 +257,7 @@ function Movement:toggleMovementLoop()
     local horizontalDir = Vector3.new(forwardDirection.X, 0, forwardDirection.Z)
 
     if horizontalDir.Magnitude < 1e-6 then
+        print("[Movement] Horizontal direction too small, returning")
         return
     end
 
@@ -260,27 +266,36 @@ function Movement:toggleMovementLoop()
     local moveSpeed = Movement.Config.BoostSpeed
     local moveVelocity = flatForward * moveSpeed
 
+    print("[Movement] Setting velocity - MoveSpeed:", moveSpeed, "Direction:", flatForward)
     rootPart.AssemblyLinearVelocity = Vector3.new(moveVelocity.X, currentVelocity.Y, moveVelocity.Z)
 
     if distance > 5 then
         local characterPos = rootPart.Position
         local targetPos = characterPos + flatForward * math.min(distance - 0.5, 10)
 
+        print("[Movement] Character position:", characterPos, "Target position:", targetPos)
+
         local terrain = Movement.Services.Workspace.Terrain
         local terrainCell = terrain:WorldToCell(targetPos)
         local gridPos = Vector3int16.new(terrainCell.X, terrainCell.Y, terrainCell.Z)
+
+        print("[Movement] Terrain cell:", terrainCell, "Grid position:", gridPos)
 
         local cellCenter = terrain:CellCenterToWorld(terrainCell.X, terrainCell.Y, terrainCell.Z)
         local toCenter = cellCenter - rootPart.Position
 
         if toCenter.Magnitude > 1e-6 then
             Movement.State.autoTunnelLookDirection = Vector3.new(toCenter.X, 0, toCenter.Z).Unit
+            print("[Movement] Updated look direction:", Movement.State.autoTunnelLookDirection)
         end
 
         -- This should call Mining module's mineTarget function when available
         -- For now, placeholder
         if Movement.Mining and Movement.Mining.mineTarget then
+            print("[Movement] Calling Mining.mineTarget with gridPos:", gridPos)
             Movement.Mining.mineTarget(gridPos)
+        else
+            print("[Movement] Mining module or mineTarget function not available")
         end
     end
 end
