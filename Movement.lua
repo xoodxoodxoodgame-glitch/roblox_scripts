@@ -81,11 +81,17 @@ function Movement:setupMovement()
                 print("[DEBUG] Toggle movement disabled - mouse unlocked")
                 
                 -- Call ActivateEnded when auto-tunnel stops
-                if Movement.Mining and Movement.Mining.ActivateEnded then
-                    print("[Movement] Calling Mining.ActivateEnded")
-                    Movement.Mining:ActivateEnded()
+                local tool = Movement.Mining:GetTool()
+                if tool then
+                    local pickaxeClient = Movement.Mining:getPickaxeClientFromToolModel(tool)
+                    if pickaxeClient then
+                        print("[Movement] Calling pickaxeClient.ActivateEnded")
+                        pickaxeClient:ActivateEnded()
+                    else
+                        print("[Movement] PickaxeClient not ready for tool")
+                    end
                 else
-                    print("[Movement] Mining module or ActivateEnded function not available")
+                    print("[Movement] No tool equipped")
                 end
             else
                 Movement.State.isAutoTunnel = true
@@ -97,11 +103,17 @@ function Movement:setupMovement()
                 print("[DEBUG] Toggle movement enabled - mouse locked")
                 
                 -- Trigger mining activation once when auto-tunnel starts
-                if Movement.Mining and Movement.Mining.ActivateStarted then
-                    print("[Movement] Calling Mining.ActivateStarted")
-                    Movement.Mining:ActivateStarted()
+                local tool = Movement.Mining:GetTool()
+                if tool then
+                    local pickaxeClient = Movement.Mining:getPickaxeClientFromToolModel(tool)
+                    if pickaxeClient then
+                        print("[Movement] Calling pickaxeClient.ActivateStarted")
+                        pickaxeClient:ActivateStarted()
+                    else
+                        print("[Movement] PickaxeClient not ready for tool")
+                    end
                 else
-                    print("[Movement] Mining module or ActivateStarted function not available")
+                    print("[Movement] No tool equipped")
                 end
             end
         end
