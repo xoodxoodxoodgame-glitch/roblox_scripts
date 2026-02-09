@@ -243,7 +243,12 @@ function Movement:toggleMovementLoop()
         return
     end
 
-    local forwardDirection = rootPart.CFrame.LookVector
+    local camera = Movement.Services.Workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    local forwardDirection = camera.CFrame.LookVector
     local horizontalDir = Vector3.new(forwardDirection.X, 0, forwardDirection.Z)
 
     if horizontalDir.Magnitude < 1e-6 then
