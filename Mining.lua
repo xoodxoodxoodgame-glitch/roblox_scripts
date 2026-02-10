@@ -317,7 +317,7 @@ function Mining:getPickaxeClientFromToolModel(toolModel)
     return toolObj:FindComponentByName("PickaxeClient")
 end
 
-function Mining:mineTarget(gridPos)
+function Mining:mineTarget(gridPos, bestOre)
     local tool = self:GetTool()
     if not tool then
         return false, "No tool equipped"
@@ -363,29 +363,95 @@ function Mining:mineTarget(gridPos)
         if success then
             -- Wait for the mining delay before returning
             task.wait(delay)
-        end
+            
+            -- Get backpack state before and after mining to verify success
+            local orePackCargo = self:getOrePackCargo()
+            local backpackCountBefore = 0
+            if orePackCargo then
+                backpackCountBefore = self:countCurrentItems(orePackCargo)
+            end
+            
+            local backpackCountAfter = 0
+            if orePackCargo then
+                backpackCountAfter = self:countCurrentItems(orePackCargo)
+            end
 
-        -- Calculate distance from player to ore
-        local distance = 0
-        if self.State.root then
-            local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
-            distance = (worldPos - self.State.root.Position).Magnitude
-        end
+            -- Mining succeeded if backpack gained an item
+            local backpackGainedItem = backpackCountAfter > backpackCountBefore
+            if backpackGainedItem then
+                -- Ore was successfully mined, remove from cache
+                if bestOre and self.State.cachedOres[bestOre] then
+                    self.State.cachedOres[bestOre] = nil
+                    if self.Config.ActiveHighlights[bestOre] then
+                        self:releaseHighlight(self.Config.ActiveHighlights[bestOre])
+                        self.Config.ActiveHighlights[bestOre] = nil
+                    end
+                    self:removeOreIdCache(bestOre)
+                end
+                
+                self.State.consecutiveFails = 0
+                
+                -- Add visual feedback and sound only when ore was actually added to backpack
+                local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
+                local tool = self:GetTool()
+                if tool then
+                    local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
+                    if pickaxeClient then
+                        -- Get ore ID directly from the ore object
+                        local oreId = bestOre:GetAttribute("MineId") or bestOre.Name
+                        local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
+                        
+                        pickaxeClient:CreateOreAddedText(blockDef, worldPos)
+                        pickaxeClient.BreakSound:Play()
+                        if pickaxeClient.SwingAnimTrack then
+                            pickaxeClient.SwingAnimTrack:Stop()
+                        end
+                    else
+                        warn("Pickaxe client not found for tool")
+                    end
+                else
+                    warn("Tool not found")
+                end
+            else
+                -- Mining appeared to succeed but backpack didn't gain item, treat as failure
+                -- Check if user moved out of range after success
+                local distance = 0
+                if self.State.root then
+                    local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
+                    distance = (worldPos - self.State.root.Position).Magnitude
+                end
+                
+                if distance > self.Config.MineRange then
+                    warn("Mining succeeded but user moved out of range before verification")
+                    return false, "User moved out of range"
+                else
+                    self.State.consecutiveFails = self.State.consecutiveFails + 1
+                    warn("Mining invoke succeeded but backpack unchanged, treating as failure")
+                    return false, "Mining succeeded but backpack unchanged"
+                end
+            end
+            
+            -- Calculate distance from player to ore
+            local distance = 0
+            if self.State.root then
+                local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
+                distance = (worldPos - self.State.root.Position).Magnitude
+            end
 
-        local targetType = targetInfo.isTerrain and "Terrain " or ""
-        local targetName = targetInfo.blockDefinition.Name or (targetInfo.isTerrain and targetInfo.cellData.Block) or targetInfo.oreData.name
-   
-        print(string.format("⛏️ %s%s (H%d) | %s (%.0f/%.0f) | D: %.1fm | M: %.2fs | P: %.2fs | W: %.2fs",
-            targetType,
-            targetName,
-            targetInfo.blockDefinition.Hardness,
-            toolName,
-            toolStats.strength,
-            toolStats.speed,
-            distance,
-            miningTime,
-            elapsedTime,
-            delay))
+            local targetType = targetInfo.isTerrain and "Terrain " or ""
+            local targetName = targetInfo.blockDefinition.Name or (targetInfo.isTerrain and targetInfo.cellData.Block) or targetInfo.oreData.name
+       
+            print(string.format("⛏️ %s%s (H%d) | %s (%.0f/%.0f) | D: %.1fm | M: %.2fs | P: %.2fs | W: %.2fs",
+                targetType,
+                targetName,
+                targetInfo.blockDefinition.Hardness,
+                toolName,
+                toolStats.strength,
+                toolStats.speed,
+                distance,
+                miningTime,
+                elapsedTime,
+                delay))
 
         return true, delay
     else
@@ -680,68 +746,7 @@ function Mining:startMiningLoop()
                                 local grid = self:worldToGridIndex(bestOre:GetPivot())
                                 local gridPos = Vector3int16.new(grid.X, grid.Y, grid.Z)
 
-                                -- Get backpack state before mining
-                                local orePackCargo = self:getOrePackCargo()
-                                local backpackCountBefore = 0
-                                if orePackCargo then
-                                    backpackCountBefore = self:countCurrentItems(orePackCargo)
-                                end
-
-                                local success, result = self:mineTarget(gridPos)
-                                if success then
-                                    -- Verify the ore was actually mined by checking if it was added to backpack
-                                    -- Note: mining delay is now handled inside mineTarget
-
-                                    local backpackCountAfter = 0
-                                    if orePackCargo then
-                                        backpackCountAfter = self:countCurrentItems(orePackCargo)
-                                    end
-
-                                    -- Mining succeeded if backpack gained an item
-                                    local backpackGainedItem = backpackCountAfter > backpackCountBefore
-                                    if backpackGainedItem then
-                                        -- Ore was successfully mined, remove from cache
-                                        if self.State.cachedOres[bestOre] then
-                                            self.State.cachedOres[bestOre] = nil
-                                            if self.Config.ActiveHighlights[bestOre] then
-                                                self:releaseHighlight(self.Config.ActiveHighlights[bestOre])
-                                                self.Config.ActiveHighlights[bestOre] = nil
-                                            end
-                                            self:removeOreIdCache(bestOre)
-                                        end
-                                        
-                                        self.State.consecutiveFails = 0
-                                        
-                                        -- Add visual feedback and sound only when ore was actually added to backpack
-                                        local worldPos = workspace.Terrain:CellCenterToWorld(gridPos.X, gridPos.Y, gridPos.Z)
-                                        local tool = self:GetTool()
-                                        if tool then
-                                            local pickaxeClient = self:getPickaxeClientFromToolModel(tool)
-                                            if pickaxeClient then
-                                                -- Get ore ID directly from the ore object
-                                                local oreId = bestOre:GetAttribute("MineId") or bestOre.Name
-                                                local blockDef = self.Services.BlockDefinitions[oreId] or self.Services.BlockDefinitions.Stone
-                                                
-                                                pickaxeClient:CreateOreAddedText(blockDef, worldPos)
-                                                pickaxeClient.BreakSound:Play()
-                                                if pickaxeClient.SwingAnimTrack then
-                                                    pickaxeClient.SwingAnimTrack:Stop()
-                                                end
-                                            else
-                                                warn("Pickaxe client not found for tool")
-                                            end
-                                        else
-                                            warn("Tool not found")
-                                        end
-                                    else
-                                        -- Mining appeared to succeed but backpack didn't gain item, treat as failure
-                                        self.State.consecutiveFails = self.State.consecutiveFails + 1
-                                        warn("Mining invoke succeeded but backpack unchanged, treating as failure")
-                                    end
-                                else
-                                    self.State.consecutiveFails = self.State.consecutiveFails + 1
-                                    warn(result .. string.format(" (consecutive fails: %d)", self.State.consecutiveFails))
-                                end
+                                local success, result = self:mineTarget(gridPos, bestOre)
                             end
                         end
                     end
