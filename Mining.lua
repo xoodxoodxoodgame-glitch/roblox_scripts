@@ -712,8 +712,8 @@ function Mining:startMiningLoop()
                 end
             end
 
-            -- Skip mining if left click is being held or auto-tunnel is enabled
-            if self.State.isLeftClickHeld or self.State.isAutoTunnel then
+            -- Skip mining if left click is being held
+            if self.State.isLeftClickHeld then
                 continue
             end
 
