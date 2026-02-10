@@ -359,6 +359,10 @@ function Mining:mineTarget(gridPos, bestOre)
         return false, "Block has no hardness data"
     end
 
+    -- Get backpack state BEFORE mining
+    local orePackCargo = self:getOrePackCargo()
+    local backpackCountBefore = self:countCurrentItems(orePackCargo)
+
     -- Execute mining
     local miningResult = self:executeMiningOperation(gridPos, toolStats, pickaxeClient, targetInfo.blockDefinition)
     if not miningResult.success then
@@ -366,7 +370,7 @@ function Mining:mineTarget(gridPos, bestOre)
     end
 
     -- Verify mining success and handle feedback
-    local verificationResult = self:verifyMiningSuccess(gridPos, bestOre, pickaxeClient)
+    local verificationResult = self:verifyMiningSuccess(gridPos, bestOre, pickaxeClient, backpackCountBefore)
     if not verificationResult.success then
         return false, verificationResult.error
     end
@@ -404,10 +408,9 @@ function Mining:executeMiningOperation(gridPos, toolStats, pickaxeClient, blockD
     }
 end
 
-function Mining:verifyMiningSuccess(gridPos, bestOre, pickaxeClient)
-    -- Get backpack state before and after mining
+function Mining:verifyMiningSuccess(gridPos, bestOre, pickaxeClient, backpackCountBefore)
+    -- Get backpack state AFTER mining
     local orePackCargo = self:getOrePackCargo()
-    local backpackCountBefore = self:countCurrentItems(orePackCargo)
     local backpackCountAfter = self:countCurrentItems(orePackCargo)
     
     -- Check if mining actually succeeded
