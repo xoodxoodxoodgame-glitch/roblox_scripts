@@ -301,4 +301,34 @@ function Movement:toggleMovementLoop()
 
 end
 
+function Movement:cleanup()
+    print("Movement: Cleaning up...")
+    
+    -- Stop auto-tunnel
+    Movement.State.isAutoTunnel = false
+    Movement.State.autoTunnelLookDirection = nil
+    Movement:stopToggleMovement()
+    
+    -- Disable boost
+    Movement.Config.boostEnabled = false
+    Movement.Config.moving = false
+    
+    -- Reset gravity
+    if Movement.Services.Workspace then
+        Movement.Services.Workspace.Gravity = 64
+    end
+    
+    -- Unlock mouse
+    Movement.State.mouseLocked = false
+    if Movement.Services.UserInputService then
+        Movement.Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        Movement.Services.UserInputService.MouseIconEnabled = true
+    end
+    
+    -- Reset left click state
+    Movement.State.isLeftClickHeld = false
+    
+    print("Movement: Cleanup complete")
+end
+
 return Movement

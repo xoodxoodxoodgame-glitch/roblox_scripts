@@ -41,6 +41,48 @@ end
 function UI:createMainTab()
     local Tabs = UI.Tabs
     
+    -- KILL SWITCH BUTTON - Emergency stop all functionality
+    local KillSwitchButton = Tabs.Main:AddButton("KillSwitch", {
+        Title = "🚨 KILL SWITCH",
+        Description = "EMERGENCY STOP - Disables all features immediately",
+        Callback = function()
+            -- Show confirmation dialog
+            local result = UI.Fluent:Dialog({
+                Title = "🚨 KILL SWITCH CONFIRMATION",
+                Content = "This will immediately stop ALL functionality including:\n• Auto mining\n• ESP features\n• Movement boosts\n• Vehicle teleport\n\nAre you sure you want to continue?",
+                Options = {
+                    {"CANCEL", false},
+                    {"ACTIVATE KILL SWITCH", true}
+                }
+            })
+            
+            if result then
+                -- Call the global kill switch function from loader
+                if _G.killSwitch then
+                    _G.killSwitch()
+                else
+                    -- Fallback - try to find the kill switch function
+                    local success = pcall(function()
+                        getfenv(0).killSwitch()
+                    end)
+                    if not success then
+                        UI.Fluent:Notify({
+                            Title = "❌ Error",
+                            Content = "Kill switch function not found. Use Alt+K instead.",
+                            Duration = 3
+                        })
+                    end
+                end
+            end
+        end
+    })
+    
+    -- Add keybind hint for kill switch
+    Tabs.Main:AddParagraph({
+        Title = "Kill Switch Shortcut",
+        Content = "Press Alt + K for instant emergency stop (no confirmation)"
+    })
+    
     -- Auto Mining Toggle
     local Toggle = Tabs.Main:AddToggle("AutoMining", {Title = "Auto Mining", Default = false })
     
@@ -438,6 +480,31 @@ function UI:updateCollapseTimerDisplay(percentLabel)
         UI.State.cachedTimerLabel.Text = percentValue
         UI.State.cachedTimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
+end
+
+function UI:cleanup()
+    print("UI: Cleaning up...")
+    
+    -- Stop ping update loop
+    if UI.State.pingScreenGui then
+        UI.State.pingScreenGui:Destroy()
+        UI.State.pingScreenGui = nil
+    end
+    
+    -- Clear UI references
+    UI.State.pingFrame = nil
+    UI.State.pingLabel = nil
+    UI.State.cargoScreenGui = nil
+    UI.State.cargoFrame = nil
+    UI.State.cargoLabel = nil
+    UI.State.cachedTimerLabel = nil
+    
+    -- Clear module references
+    UI.ESP = nil
+    UI.Mining = nil
+    UI.Movement = nil
+    
+    print("UI: Cleanup complete")
 end
 
 return UI

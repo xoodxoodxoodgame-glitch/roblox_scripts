@@ -86,4 +86,16 @@ function Vehicle:teleportVehicleToPlayer(vehicle)
     vehicle:PivotTo(targetCFrame)
 end
 
+function Vehicle:cleanup()
+    print("Vehicle: Cleaning up...")
+    
+    -- Disconnect vehicle teleport connections
+    if Vehicle.State.connections and Vehicle.State.connections.inputBegan then
+        Vehicle.State.connections.inputBegan:Disconnect()
+        Vehicle.State.connections.inputBegan = nil
+    end
+    
+    print("Vehicle: Cleanup complete")
+end
+
 return Vehicle

@@ -205,6 +205,104 @@ SaveManager:SetIgnoreIndexes({})
 InterfaceManager:SetFolder("FluentScriptHub")
 SaveManager:SetFolder("FluentScriptHub/Mining")
 
+-- Kill Switch Function - Emergency stop all functionality
+local function killSwitch()
+    print("🚨 KILL SWITCH ACTIVATED - Stopping all functionality...")
+    
+    -- Stop main loop
+    State.mainLoopRunning = false
+    
+    -- Call cleanup functions for each module if they exist
+    if Utilities and Utilities.cleanup then
+        pcall(Utilities.cleanup, Utilities)
+    end
+    
+    if UI and UI.cleanup then
+        pcall(UI.cleanup, UI)
+    end
+    
+    if Mining and Mining.cleanup then
+        pcall(Mining.cleanup, Mining)
+    end
+    
+    if ESP and ESP.cleanup then
+        pcall(ESP.cleanup, ESP)
+    end
+    
+    if Movement and Movement.cleanup then
+        pcall(Movement.cleanup, Movement)
+    end
+    
+    if Vehicle and Vehicle.cleanup then
+        pcall(Vehicle.cleanup, Vehicle)
+    end
+    
+    -- Disconnect all remaining connections
+    for name, connection in pairs(State.connections) do
+        if connection and connection.Disconnect then
+            pcall(connection.Disconnect, connection)
+            State.connections[name] = nil
+        end
+    end
+    
+    -- Clear all state
+    for key, _ in pairs(State) do
+        if type(State[key]) == "table" and key ~= "character" and key ~= "humanoid" and key ~= "root" then
+            State[key] = {}
+        elseif type(State[key]) == "boolean" then
+            State[key] = false
+        end
+    end
+    
+    -- Reset all config to defaults
+    Config.AutoMining = false
+    Config.MineRange = 40
+    Config.BoostSpeed = 100
+    Config.boostEnabled = false
+    Config.moving = false
+    Config.ESPEnabled = false
+    Config.ESPRange = 300
+    
+    -- Clear selected ores and gems
+    for key in pairs(Config.SelectedOres) do
+        Config.SelectedOres[key] = nil
+    end
+    for key in pairs(Config.SelectedGems) do
+        Config.SelectedGems[key] = nil
+    end
+    
+    -- Reset workspace gravity
+    if Workspace then
+        Workspace.Gravity = 64
+    end
+    
+    -- Reset mouse behavior
+    if UserInputService then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        UserInputService.MouseIconEnabled = true
+    end
+    
+    print("✅ KILL SWITCH COMPLETE - All functionality stopped")
+end
+
+-- Make kill switch globally accessible for UI
+_G.killSwitch = killSwitch
+
+-- Setup kill switch keybind (Alt + K)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.K and UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) then
+        killSwitch()
+        if Fluent then
+            Fluent:Notify({
+                Title = "🚨 KILL SWITCH ACTIVATED",
+                Content = "All functionality has been stopped.",
+                Duration = 3
+            })
+        end
+    end
+end)
+
 -- Build interface sections
 if UI and UI.Tabs then
     InterfaceManager:BuildInterfaceSection(UI.Tabs.Settings)

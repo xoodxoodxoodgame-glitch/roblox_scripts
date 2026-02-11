@@ -800,4 +800,41 @@ function Mining:releaseHighlight(highlight)
     end
 end
 
+function Mining:cleanup()
+    print("Mining: Cleaning up...")
+    
+    -- Stop mining loop
+    self.State.mainLoopRunning = false
+    
+    -- Clear ore cache
+    for ore, _ in pairs(self.State.cachedOres) do
+        self.State.cachedOres[ore] = nil
+        if self.Config.ActiveHighlights[ore] then
+            self:releaseHighlight(self.Config.ActiveHighlights[ore])
+            self.Config.ActiveHighlights[ore] = nil
+        end
+        self:removeOreIdCache(ore)
+    end
+    
+    -- Clear selected ores and gems
+    for key in pairs(self.Config.SelectedOres) do
+        self.Config.SelectedOres[key] = nil
+    end
+    for key in pairs(self.Config.SelectedGems) do
+        self.Config.SelectedGems[key] = nil
+    end
+    
+    -- Reset mining state
+    self.Config.AutoMining = false
+    self.State.consecutiveFails = 0
+    
+    -- Clear cargo and timer UI references
+    self.State.cargoScreenGui = nil
+    self.State.cargoFrame = nil
+    self.State.cargoLabel = nil
+    self.State.cachedTimerLabel = nil
+    
+    print("Mining: Cleanup complete")
+end
+
 return Mining

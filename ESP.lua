@@ -827,4 +827,28 @@ function ESP:startESPUpdateLoop()
     end)
 end
 
+function ESP:cleanup()
+    print("ESP: Cleaning up...")
+    
+    -- Disable ESP
+    ESP.Config.ESPEnabled = false
+    ESP.State.PlayerESPEnabled = false
+    
+    -- Clear ore ESP
+    ESP:cleanupESP()
+    
+    -- Clear player ESP
+    ESP:disablePlayerESP()
+    
+    -- Clear object pools
+    ESP.ESPPools.highlights = {}
+    ESP.ESPPools.billboards = {}
+    
+    -- Clear cached data
+    ESP.MATERIAL_DATA = {}
+    ESP.GEM_DATA = {}
+    
+    print("ESP: Cleanup complete")
+end
+
 return ESP
