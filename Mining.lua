@@ -710,6 +710,43 @@ function Mining:startMiningLoop()
                                             self:removeOreIdCache(bestOre)
                                         end
                                         
+                                        -- Ore was successfully mined, add to statistics
+                                        local oreId = self:getCachedOreId(bestOre)
+                                        local oreData = self.MATERIAL_DATA[oreId] or self.GEM_DATA[oreId]
+                                        if oreData then
+                                            -- Initialize total blocks mined if not exists
+                                            if not self.State.totalBlocksMined then
+                                                self.State.totalBlocksMined = 0
+                                            end
+                                            if not self.State.totalValueMined then
+                                                self.State.totalValueMined = 0
+                                            end
+                                            if not self.State.oreCounts then
+                                                self.State.oreCounts = {}
+                                            end
+                                            if not self.State.gemCounts then
+                                                self.State.gemCounts = {}
+                                            end
+                                            
+                                            -- Update statistics
+                                            self.State.totalBlocksMined = self.State.totalBlocksMined + 1
+                                            self.State.totalValueMined = self.State.totalValueMined + (oreData.value or 0)
+                                            
+                                            -- Track individual ore/gem counts
+                                            if oreData.Types and oreData.Types.Gem then
+                                                -- It's a gem
+                                                local gemName = oreData.name or "Unknown"
+                                                self.State.gemCounts[gemName] = (self.State.gemCounts[gemName] or 0) + 1
+                                            else
+                                                -- It's a material
+                                                local materialName = oreData.name or "Unknown"
+                                                self.State.oreCounts[materialName] = (self.State.oreCounts[materialName] or 0) + 1
+                                            end
+                                            
+                                            print(string.format("Mined %s (Value: %d) - Total: %d blocks, %d value", 
+                                                oreData.name or "Unknown", oreData.value or 0, self.State.totalBlocksMined, self.State.totalValueMined))
+                                        end
+                                        
                                         self.State.consecutiveFails = 0
                                         
                                         -- Add visual feedback and sound only when ore was actually added to backpack

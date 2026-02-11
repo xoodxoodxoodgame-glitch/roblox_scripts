@@ -23,11 +23,13 @@ function UI.init(State, Config, Fluent, SaveManager, InterfaceManager)
     UI.Tabs = {
         Main = UI.Window:AddTab({ Title = "Main", Icon = "" }),
         PlayerESP = UI.Window:AddTab({ Title = "Player ESP", Icon = "eye" }),
+        Statistics = UI.Window:AddTab({ Title = "Statistics", Icon = "bar-chart" }),
         Settings = UI.Window:AddTab({ Title = "Settings", Icon = "settings" })
     }
     
     UI:createMainTab()
     UI:createPlayerESPTab()
+    UI:createStatisticsTab()
     
     -- Setup ping display
     UI:setupPingDisplay()
@@ -458,6 +460,94 @@ function UI:updateCollapseTimerDisplay(percentLabel)
         UI.State.cachedTimerLabel.Text = percentValue
         UI.State.cachedTimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
+end
+
+function UI:createStatisticsTab()
+    local Tabs = UI.Tabs
+    
+    -- Statistics Title
+    Tabs.Statistics:AddParagraph({
+        Title = "📊 Mining Statistics",
+        Content = "Track your mining progress and earnings"
+    })
+    
+    -- Statistics Section
+    Tabs.Statistics:AddSection("Ore Breakdown")
+    
+    -- Function to create ore display labels
+    local function createOreDisplay(oreName, oreId)
+        local oreLabel = Tabs.Statistics:AddLabel(oreName .. "Count", {
+            Title = oreName,
+            Description = "Total " .. oreName .. " mined"
+        })
+        
+        local oreValueLabel = Tabs.Statistics:AddLabel(oreName .. "Value", {
+            Title = oreName .. " Value",
+            Description = "Total value of " .. oreName .. " mined"
+        })
+        
+        return oreLabel, oreValueLabel
+    end
+    
+    -- Create displays for common materials
+    local materialDisplays = {}
+    local materials = {"Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium", "Gold", "Titanium", "Tungsten", "Molybdenum", "Plutonium", "Palladium", "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"}
+    
+    for _, materialName in ipairs(materials) do
+        local label, valueLabel = createOreDisplay(materialName, materialName)
+        materialDisplays[materialName] = {label = label, valueLabel = valueLabel}
+    end
+    
+    -- Create displays for gems
+    local gemDisplays = {}
+    local gems = {"Topaz", "Emerald", "Ruby", "Sapphire", "Diamond", "Poudretteite", "Zultanite", "Grandidierite", "Musgravite", "Painite"}
+    
+    for _, gemName in ipairs(gems) do
+        local label, valueLabel = createOreDisplay(gemName, gemName)
+        gemDisplays[gemName] = {label = label, valueLabel = valueLabel}
+    end
+    
+    -- Function to update statistics display
+    local function updateStatistics()
+        if UI.State and UI.Mining then
+            -- Update material counts and values
+            for materialName, displays in pairs(materialDisplays) do
+                if UI.State.oreCounts and UI.State.oreCounts[materialName] then
+                    displays.label:SetDesc(materialName .. " x" .. UI.State.oreCounts[materialName])
+                    local oreData = UI.Mining and UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName]
+                    local totalValue = (oreData and oreData.value or 0) * UI.State.oreCounts[materialName]
+                    displays.valueLabel:SetDesc("$" .. string.format("%.2f", totalValue))
+                else
+                    displays.label:SetDesc(materialName .. " x0")
+                    displays.valueLabel:SetDesc("$0.00")
+                end
+            end
+            
+            -- Update gem counts and values
+            for gemName, displays in pairs(gemDisplays) do
+                if UI.State.gemCounts and UI.State.gemCounts[gemName] then
+                    displays.label:SetDesc(gemName .. " x" .. UI.State.gemCounts[gemName])
+                    local gemData = UI.Mining and UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName]
+                    local totalValue = (gemData and gemData.value or 0) * UI.State.gemCounts[gemName]
+                    displays.valueLabel:SetDesc("$" .. string.format("%.2f", totalValue))
+                else
+                    displays.label:SetDesc(gemName .. " x0")
+                    displays.valueLabel:SetDesc("$0.00")
+                end
+            end
+        end
+    end
+    
+    -- Update statistics every 2 seconds
+    task.spawn(function()
+        while UI.Fluent and not UI.Fluent.Unloaded do
+            updateStatistics()
+            task.wait(2)
+        end
+    end)
+    
+    -- Initial update
+    updateStatistics()
 end
 
 function UI:cleanup()
