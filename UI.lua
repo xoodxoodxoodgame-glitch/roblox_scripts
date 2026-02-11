@@ -41,8 +41,21 @@ end
 function UI:createMainTab()
     local Tabs = UI.Tabs
     
+    -- Auto Mining Toggle
+    local Toggle = Tabs.Main:AddToggle("AutoMining", {Title = "Auto Mining", Default = false })
+    
+    Tabs.Settings:AddKeybind("AutoMiningKeybind", {
+        Title = "Auto Mining Keybind",
+        Mode = "Toggle",
+        Default = "Q",
+        Callback = function(Value)
+            UI.Config.AutoMining = Value
+            Toggle:SetValue(Value)
+        end
+    })
+    
     -- KILL SWITCH BUTTON - Emergency stop all functionality
-    local KillSwitchButton = Tabs.Main:AddButton({
+    local KillSwitchButton = Tabs.Settings:AddButton({
         Title = "🚨 KILL SWITCH",
         Description = "EMERGENCY STOP - Disables all features immediately",
         Callback = function()
@@ -56,22 +69,9 @@ function UI:createMainTab()
     })
     
     -- Add keybind hint for kill switch
-    Tabs.Main:AddParagraph({
+    Tabs.Settings:AddParagraph({
         Title = "Kill Switch Shortcut",
         Content = "Press Alt + K for instant emergency stop (no confirmation)"
-    })
-    
-    -- Auto Mining Toggle
-    local Toggle = Tabs.Main:AddToggle("AutoMining", {Title = "Auto Mining", Default = false })
-    
-    Tabs.Settings:AddKeybind("AutoMiningKeybind", {
-        Title = "Auto Mining Keybind",
-        Mode = "Toggle",
-        Default = "Q",
-        Callback = function(Value)
-            UI.Config.AutoMining = Value
-            Toggle:SetValue(Value)
-        end
     })
     
     Toggle:OnChanged(function(Value)
