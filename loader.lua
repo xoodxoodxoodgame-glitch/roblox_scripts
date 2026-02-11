@@ -111,16 +111,33 @@ if hitbox then
     hitbox.CanCollide = false
 end
 
--- Module loader function using loadstring
+-- Development mode - set to true to load modules locally instead of from remote
+local isDevelop = true
+local developPath = "C:/Users/xoodx/AppData/Local/Volt/scripts/"
+
+-- Module loader function using loadstring or local files
 local function loadModule(moduleName)
-    local success, module = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/xoodxoodxoodgame-glitch/roblox_scripts/main/" .. moduleName .. ".lua?v=" .. tick()))()
-    end)
+    local success, module
+    
+    if isDevelop then
+        -- Load from local file system
+        success, module = pcall(function()
+            local filePath = developPath .. moduleName .. ".lua"
+            local file = readfile(filePath)
+            return loadstring(file)()
+        end)
+    else
+        -- Load from remote URL
+        success, module = pcall(function()
+            return loadstring(game:HttpGet("https://raw.githubusercontent.com/xoodxoodxoodgame-glitch/roblox_scripts/main/" .. moduleName .. ".lua?v=" .. tick()))()
+        end)
+    end
     
     if success then
         return module
     else
-        warn("Failed to load module:", moduleName, "-", module)
+        local loadMethod = isDevelop and "local file" or "remote URL"
+        warn("Failed to load module from", loadMethod .. ":", moduleName, "-", module)
         return nil
     end
 end
