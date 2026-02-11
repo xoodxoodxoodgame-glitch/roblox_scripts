@@ -151,7 +151,28 @@ local Services = {
     BlockDefinitions = BlockDefinitions
 }
 
--- Initialize modules with shared state and services
+-- Set cross-module references BEFORE initialization
+if ESP then
+    ESP.UI = UI
+    ESP.Mining = Mining
+end
+
+if UI then
+    UI.ESP = ESP
+    UI.Mining = Mining
+    UI.Movement = Movement
+end
+
+if Mining then
+    Mining.UI = UI
+end
+
+if Movement then
+    Movement.UI = UI
+    Movement.Mining = Mining
+end
+
+-- Initialize modules
 if Utilities then
     Utilities.init(State, Config, Services)
 end
@@ -174,27 +195,6 @@ end
 
 if Vehicle then
     Vehicle.init(State, Config, Services)
-end
-
--- Set cross-module references
-if ESP then
-    ESP.UI = UI
-    ESP.Mining = Mining
-end
-
-if UI then
-    UI.ESP = ESP
-    UI.Mining = Mining
-    UI.Movement = Movement
-end
-
-if Mining then
-    Mining.UI = UI
-end
-
-if Movement then
-    Movement.UI = UI
-    Movement.Mining = Mining
 end
 
 -- Setup SaveManager and InterfaceManager
