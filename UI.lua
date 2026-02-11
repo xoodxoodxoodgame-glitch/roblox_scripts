@@ -476,14 +476,14 @@ function UI:createStatisticsTab()
     
     -- Function to create ore display labels
     local function createOreDisplay(oreName, oreId)
-        local oreLabel = Tabs.Statistics:AddLabel(oreName .. "Count", {
-            Title = oreName,
-            Description = "Total " .. oreName .. " mined"
+        local oreLabel = Tabs.Statistics:AddParagraph({
+            Title = oreName .. " Statistics",
+            Description = "Total " .. oreName .. " mined: 0\nValue: $0.00"
         })
         
-        local oreValueLabel = Tabs.Statistics:AddLabel(oreName .. "Value", {
-            Title = oreName .. " Value",
-            Description = "Total value of " .. oreName .. " mined"
+        local oreValueLabel = Tabs.Statistics:AddParagraph({
+            Title = oreName .. " Value", 
+            Description = "Total value of " .. oreName .. " mined: $0.00"
         })
         
         return oreLabel, oreValueLabel
@@ -513,26 +513,18 @@ function UI:createStatisticsTab()
             -- Update material counts and values
             for materialName, displays in pairs(materialDisplays) do
                 if UI.State.oreCounts and UI.State.oreCounts[materialName] then
-                    displays.label:SetDesc(materialName .. " x" .. UI.State.oreCounts[materialName])
-                    local oreData = UI.Mining and UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName]
-                    local totalValue = (oreData and oreData.value or 0) * UI.State.oreCounts[materialName]
-                    displays.valueLabel:SetDesc("$" .. string.format("%.2f", totalValue))
+                    displays.label:SetDesc(materialName .. "\nTotal: " .. materialName .. " x" .. UI.State.oreCounts[materialName] .. "\nValue: $" .. string.format("%.2f", (UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName] and UI.Mining.MATERIAL_DATA[materialName].value or 0) * UI.State.oreCounts[materialName]))
                 else
-                    displays.label:SetDesc(materialName .. " x0")
-                    displays.valueLabel:SetDesc("$0.00")
+                    displays.label:SetDesc(materialName .. "\nTotal: " .. materialName .. " x0\nValue: $0.00")
                 end
             end
             
             -- Update gem counts and values
             for gemName, displays in pairs(gemDisplays) do
                 if UI.State.gemCounts and UI.State.gemCounts[gemName] then
-                    displays.label:SetDesc(gemName .. " x" .. UI.State.gemCounts[gemName])
-                    local gemData = UI.Mining and UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName]
-                    local totalValue = (gemData and gemData.value or 0) * UI.State.gemCounts[gemName]
-                    displays.valueLabel:SetDesc("$" .. string.format("%.2f", totalValue))
+                    displays.label:SetDesc(gemName .. "\nTotal: " .. gemName .. " x" .. UI.State.gemCounts[gemName] .. "\nValue: $" .. string.format("%.2f", (UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName] and UI.Mining.GEM_DATA[gemName].value or 0) * UI.State.gemCounts[gemName]))
                 else
-                    displays.label:SetDesc(gemName .. " x0")
-                    displays.valueLabel:SetDesc("$0.00")
+                    displays.label:SetDesc(gemName .. "\nTotal: " .. gemName .. " x0\nValue: $0.00")
                 end
             end
         end
