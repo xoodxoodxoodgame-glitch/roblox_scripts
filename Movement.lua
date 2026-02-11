@@ -57,8 +57,10 @@ function Movement:setupMovement()
         if gp then return end
 
         if input.KeyCode == Enum.KeyCode.C then
+            if Movement.Config and Movement.Config.boostEnabled ~= nil then
             Movement.Config.boostEnabled = not Movement.Config.boostEnabled
             Movement:updateGravity()
+        end
         elseif input.KeyCode == Enum.KeyCode.LeftAlt then
             -- Toggle between current setting and 500 (max)
             if Movement.Config.BoostSpeed ~= 500 then
@@ -138,7 +140,7 @@ function Movement:setupMovement()
 
     -- Render stepped for boost and toggle movement
     Movement.State.connections.renderStepped = Movement.Services.RunService.RenderStepped:Connect(function()
-        if Movement.Config.boostEnabled and Movement.Config.moving then
+        if Movement.Config and Movement.Config.boostEnabled and Movement.Config.moving then
             local dir = Movement.State.humanoid.MoveDirection
             if dir.Magnitude > 0 then
                 local currentVelocity = Movement.State.root.AssemblyLinearVelocity
@@ -194,7 +196,7 @@ function Movement:setupMovement()
 end
 
 function Movement:updateGravity()
-    if Movement.Config.boostEnabled then
+    if Movement.Config and Movement.Config.boostEnabled then
         Movement.Services.Workspace.Gravity = math.max(64, Movement.Config.BoostSpeed * 2)
     else
         Movement.Services.Workspace.Gravity = 64
@@ -310,8 +312,10 @@ function Movement:cleanup()
     Movement:stopToggleMovement()
     
     -- Disable boost
-    Movement.Config.boostEnabled = false
-    Movement.Config.moving = false
+    if Movement.Config then
+        Movement.Config.boostEnabled = false
+        Movement.Config.moving = false
+    end
     
     -- Reset gravity
     if Movement.Services.Workspace then
