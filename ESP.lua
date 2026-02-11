@@ -268,8 +268,8 @@ function ESP:getBillboardAttachment()
         textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         textLabel.Font = Enum.Font.SourceSansBold
-        textLabel.TextSize = 16
-        textLabel.TextTransparency = 0
+        textLabel.TextSize = 12
+        textLabel.TextTransparency = 0.5
         textLabel.TextStrokeTransparency = 0
     end
     attachment.Parent = workspace
@@ -609,8 +609,8 @@ function ESP:setBillboardText(Player, Distance)
             TextLabel.TextStrokeTransparency = 1 - opacity
         else
             Billboard.Size = UDim2.new(0, 200, 0, 50)
-            TextLabel.TextTransparency = 0
-            TextLabel.TextStrokeTransparency = 0
+            TextLabel.TextTransparency = 0.5
+            TextLabel.TextStrokeTransparency = 0.5
         end
 
         local isFriend = ESP.State.friendshipCache[Player.UserId]
@@ -706,7 +706,7 @@ function ESP:addPlayer(Player)
     TextLabel.TextStrokeTransparency = 0
     TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     TextLabel.Font = Enum.Font.SourceSansBold
-    TextLabel.TextSize = 16
+    TextLabel.TextSize = 12
     TextLabel.Parent = Billboard
 
     ESP.State.PlayerESPBillboards[Player] = Billboard
