@@ -46,34 +46,12 @@ function UI:createMainTab()
         Title = "🚨 KILL SWITCH",
         Description = "EMERGENCY STOP - Disables all features immediately",
         Callback = function()
-            -- Show confirmation dialog
-            local result = UI.Fluent:Dialog({
-                Title = "🚨 KILL SWITCH CONFIRMATION",
-                Content = "This will immediately stop ALL functionality including:\n• Auto mining\n• ESP features\n• Movement boosts\n• Vehicle teleport\n\nAre you sure you want to continue?",
-                Options = {
-                    {"CANCEL", false},
-                    {"ACTIVATE KILL SWITCH", true}
-                }
+            -- Show confirmation notification instead of dialog
+            UI.Fluent:Notify({
+                Title = "🚨 KILL SWITCH",
+                Content = "Press Alt+K to activate emergency stop\n(This will disable ALL features immediately)",
+                Duration = 5
             })
-            
-            if result then
-                -- Call the global kill switch function from loader
-                if _G.killSwitch then
-                    _G.killSwitch()
-                else
-                    -- Fallback - try to find the kill switch function
-                    local success = pcall(function()
-                        getfenv(0).killSwitch()
-                    end)
-                    if not success then
-                        UI.Fluent:Notify({
-                            Title = "❌ Error",
-                            Content = "Kill switch function not found. Use Alt+K instead.",
-                            Duration = 3
-                        })
-                    end
-                end
-            end
         end
     })
     
