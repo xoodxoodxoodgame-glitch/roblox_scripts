@@ -463,6 +463,12 @@ end
 function UI:cleanup()
     print("UI: Cleaning up...")
     
+    -- Destroy the entire Fluent UI window
+    if UI.Fluent then
+        UI.Fluent:Destroy()
+        UI.Fluent = nil
+    end
+    
     -- Stop ping update loop
     if UI.State.pingScreenGui then
         UI.State.pingScreenGui:Destroy()
