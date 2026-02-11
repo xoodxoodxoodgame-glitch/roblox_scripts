@@ -472,60 +472,46 @@ function UI:createStatisticsTab()
     })
     
     -- Statistics Section
-    Tabs.Statistics:AddSection("Ore Breakdown")
+    Tabs.Statistics:AddSection("Mining Summary")
     
-    -- Function to create ore display labels
-    local function createOreDisplay(oreName, oreId)
-        local oreLabel = Tabs.Statistics:AddParagraph({
-            Title = oreName .. " Statistics",
-            Description = "Total " .. oreName .. " mined: 0\nValue: $0.00"
-        })
-        
-        local oreValueLabel = Tabs.Statistics:AddParagraph({
-            Title = oreName .. " Value", 
-            Description = "Total value of " .. oreName .. " mined: $0.00"
-        })
-        
-        return oreLabel, oreValueLabel
-    end
-    
-    -- Create displays for common materials
-    local materialDisplays = {}
-    local materials = {"Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium", "Gold", "Titanium", "Tungsten", "Molybdenum", "Plutonium", "Palladium", "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"}
-    
-    for _, materialName in ipairs(materials) do
-        local label, valueLabel = createOreDisplay(materialName, materialName)
-        materialDisplays[materialName] = {label = label, valueLabel = valueLabel}
-    end
-    
-    -- Create displays for gems
-    local gemDisplays = {}
-    local gems = {"Topaz", "Emerald", "Ruby", "Sapphire", "Diamond", "Poudretteite", "Zultanite", "Grandidierite", "Musgravite", "Painite"}
-    
-    for _, gemName in ipairs(gems) do
-        local label, valueLabel = createOreDisplay(gemName, gemName)
-        gemDisplays[gemName] = {label = label, valueLabel = valueLabel}
-    end
+    -- Create a single display paragraph for all ores
+    local statisticsDisplay = Tabs.Statistics:AddParagraph({
+        Title = "Ore Breakdown",
+        Description = "No ores mined yet..."
+    })
     
     -- Function to update statistics display
     local function updateStatistics()
         if UI.State and UI.Mining then
-            -- Update material counts and values
-            for materialName, displays in pairs(materialDisplays) do
-                if UI.State.oreCounts and UI.State.oreCounts[materialName] then
-                    displays.label:SetDesc(materialName .. "\nTotal: " .. materialName .. " x" .. UI.State.oreCounts[materialName] .. "\nValue: $" .. string.format("%.2f", (UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName] and UI.Mining.MATERIAL_DATA[materialName].value or 0) * UI.State.oreCounts[materialName]))
-                else
-                    displays.label:SetDesc(materialName .. "\nTotal: " .. materialName .. " x0\nValue: $0.00")
+            local statsLines = {}
+            
+            -- Add material counts
+            local materials = {"Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium", "Gold", "Titanium", "Tungsten", "Molybdenum", "Plutonium", "Palladium", "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"}
+            
+            for _, materialName in ipairs(materials) do
+                if UI.State.oreCounts and UI.State.oreCounts[materialName] and UI.State.oreCounts[materialName] > 0 then
+                    local oreData = UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName]
+                    local totalValue = (oreData and oreData.value or 0) * UI.State.oreCounts[materialName]
+                    table.insert(statsLines, materialName .. " x" .. UI.State.oreCounts[materialName] .. " " .. totalValue)
                 end
             end
             
-            -- Update gem counts and values
-            for gemName, displays in pairs(gemDisplays) do
-                if UI.State.gemCounts and UI.State.gemCounts[gemName] then
-                    displays.label:SetDesc(gemName .. "\nTotal: " .. gemName .. " x" .. UI.State.gemCounts[gemName] .. "\nValue: $" .. string.format("%.2f", (UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName] and UI.Mining.GEM_DATA[gemName].value or 0) * UI.State.gemCounts[gemName]))
-                else
-                    displays.label:SetDesc(gemName .. "\nTotal: " .. gemName .. " x0\nValue: $0.00")
+            -- Add gem counts
+            local gems = {"Topaz", "Emerald", "Ruby", "Sapphire", "Diamond", "Poudretteite", "Zultanite", "Grandidierite", "Musgravite", "Painite"}
+            
+            for _, gemName in ipairs(gems) do
+                if UI.State.gemCounts and UI.State.gemCounts[gemName] and UI.State.gemCounts[gemName] > 0 then
+                    local gemData = UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName]
+                    local totalValue = (gemData and gemData.value or 0) * UI.State.gemCounts[gemName]
+                    table.insert(statsLines, gemName .. " x" .. UI.State.gemCounts[gemName] .. " " .. totalValue)
                 end
+            end
+            
+            -- Update display
+            if #statsLines > 0 then
+                statisticsDisplay:SetDesc(table.concat(statsLines, "\n"))
+            else
+                statisticsDisplay:SetDesc("No ores mined yet...")
             end
         end
     end
