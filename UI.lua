@@ -484,6 +484,7 @@ function UI:createStatisticsTab()
     local function updateStatistics()
         if UI.State and UI.Mining then
             local statsLines = {}
+            local allOres = {}
             
             -- Add material counts
             local materials = {"Tin", "Iron", "Lead", "Cobalt", "Aluminium", "Silver", "Uranium", "Vanadium", "Gold", "Titanium", "Tungsten", "Molybdenum", "Plutonium", "Palladium", "Mithril", "Thorium", "Iridium", "Adamantium", "Rhodium", "Unobtainium"}
@@ -492,7 +493,11 @@ function UI:createStatisticsTab()
                 if UI.State.oreCounts and UI.State.oreCounts[materialName] and UI.State.oreCounts[materialName] > 0 then
                     local oreData = UI.Mining.MATERIAL_DATA and UI.Mining.MATERIAL_DATA[materialName]
                     local totalValue = (oreData and oreData.value or 0) * UI.State.oreCounts[materialName]
-                    table.insert(statsLines, materialName .. " x" .. UI.State.oreCounts[materialName] .. " " .. totalValue)
+                    table.insert(allOres, {
+                        name = materialName,
+                        count = UI.State.oreCounts[materialName],
+                        value = totalValue
+                    })
                 end
             end
             
@@ -503,8 +508,22 @@ function UI:createStatisticsTab()
                 if UI.State.gemCounts and UI.State.gemCounts[gemName] and UI.State.gemCounts[gemName] > 0 then
                     local gemData = UI.Mining.GEM_DATA and UI.Mining.GEM_DATA[gemName]
                     local totalValue = (gemData and gemData.value or 0) * UI.State.gemCounts[gemName]
-                    table.insert(statsLines, gemName .. " x" .. UI.State.gemCounts[gemName] .. " " .. totalValue)
+                    table.insert(allOres, {
+                        name = gemName,
+                        count = UI.State.gemCounts[gemName],
+                        value = totalValue
+                    })
                 end
+            end
+            
+            -- Sort by count (descending)
+            table.sort(allOres, function(a, b)
+                return a.count > b.count
+            end)
+            
+            -- Create stats lines from sorted data
+            for _, ore in ipairs(allOres) do
+                table.insert(statsLines, ore.name .. " x" .. ore.count .. " " .. ore.value)
             end
             
             -- Update display
