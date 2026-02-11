@@ -42,7 +42,7 @@ function UI:createMainTab()
     local Tabs = UI.Tabs
     
     -- KILL SWITCH BUTTON - Emergency stop all functionality
-    local KillSwitchButton = Tabs.Main:AddButton("KillSwitch", {
+    local KillSwitchButton = Tabs.Main:AddButton({
         Title = "🚨 KILL SWITCH",
         Description = "EMERGENCY STOP - Disables all features immediately",
         Callback = function()
