@@ -101,8 +101,8 @@ function UI:createMainTab()
     
     BoostSlider:OnChanged(function(Value)
         UI.Config.BoostSpeed = tonumber(Value)
-        if UI.Movement and UI.Movement.updateGravity then
-            UI.Movement.updateGravity()
+        if UI.Movement and UI.Movement.Services and UI.Movement.updateGravity then
+            UI.Movement:updateGravity()
         end
     end)
     

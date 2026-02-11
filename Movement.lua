@@ -196,6 +196,7 @@ function Movement:setupMovement()
 end
 
 function Movement:updateGravity()
+    if not Movement.Services or not Movement.Services.Workspace then return end
     if Movement.Config and Movement.Config.boostEnabled then
         Movement.Services.Workspace.Gravity = math.max(64, Movement.Config.BoostSpeed * 2)
     else
