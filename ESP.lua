@@ -618,7 +618,7 @@ function ESP:setBillboardText(Player, Distance)
             isFriend = ESP.Services.player:IsFriendsWith(Player.UserId)
             ESP.State.friendshipCache[Player.UserId] = isFriend
         end
-        TextLabel.TextColor3 = isFriend and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+        TextLabel.TextColor3 = isFriend and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 
         local NamePart = ESP.State.PlayerESPShowName and ESP:getDisplayName(Player) or nil
         local DistancePart = nil
@@ -702,7 +702,7 @@ function ESP:addPlayer(Player)
     local TextLabel = Instance.new("TextLabel")
     TextLabel.Size = UDim2.new(1, 0, 1, 0)
     TextLabel.BackgroundTransparency = 1
-    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
     TextLabel.TextStrokeTransparency = 0
     TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
     TextLabel.Font = Enum.Font.SourceSansBold
